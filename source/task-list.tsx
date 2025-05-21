@@ -1,49 +1,48 @@
-import React, { useEffect, useState } from 'react';
-import { Text, Box, } from 'ink';
-import { fetchInboxTasks } from './api.js';
+// src/App.tsx
+import React, { useState } from 'react';
+import { Box, Text, useInput } from 'ink';
+import { fetchTasks } from './api.js'; // you'll implement this
 
 type Task = {
-	id: string;
 	title: string;
+	id: string;
 };
 
-const TaskList = () => {
+const App: React.FC = () => {
 	const [tasks, setTasks] = useState<Task[]>([]);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState<string | null>(null);
+	const [selectedIndex, setSelectedIndex] = useState(0);
 
-	useEffect(() => {
-		fetchInboxTasks()
-			.then((data) => {
-				setTasks(data);
-			})
-			.catch((err) => {
-				setError('Failed to fetch tasks');
-			})
-			.finally(() => {
-				setLoading(false);
-			});
+	React.useEffect(() => {
+		(async () => {
+			const fetchedTasks = await fetchTasks();
+			setTasks(fetchedTasks);
+		})();
 	}, []);
 
-	if (loading) {
-		return <Text>Loading tasks...</Text>;
-	}
-
-	if (error) {
-		return <Text color="red">{error}</Text>;
-	}
-
-	if (tasks.length === 0) {
-		return <Text color="gray">No tasks in inbox.</Text>;
-	}
+	useInput((input, key) => {
+		if (key.downArrow || input === 'j') {
+			setSelectedIndex(i => Math.min(i + 1, tasks.length - 1));
+		} else if (key.upArrow || input === 'k') {
+			setSelectedIndex(i => Math.max(i - 1, 0));
+		} else if (input === 'q') {
+			process.exit(0);
+		}
+	});
 
 	return (
-		<Box flexDirection="column">
-			{tasks.map((task) => (
-				<Text key={task.id}>• {task.title}</Text>
+		<Box flexDirection="column" padding={1}>
+			{tasks.length === 0 && <Text>Loading...</Text>}
+			{tasks.map((task, index) => (
+				<Text
+					key={task.id}
+					color={index === selectedIndex ? 'black' : undefined}
+					backgroundColor={index === selectedIndex ? 'cyan' : undefined}
+				>
+					{task.title}
+				</Text>
 			))}
 		</Box>
 	);
 };
 
-export default TaskList;
+export default App;

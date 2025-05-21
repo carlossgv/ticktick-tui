@@ -1,26 +1,24 @@
 import React from 'react';
-import { Text } from 'ink';
-
-type Props = {
-	name: string | undefined;
-};
-
-import { Box } from 'ink';
+import { Box, Text } from 'ink';
 import TaskList from './task-list.js';
 
 const App = () => {
 	return (
-		<Box flexDirection="row">
-			{/* Left column (empty for now) */}
-			<Box width="25%"></Box>
+		<Box flexDirection="row" width="100%" padding={1} gap={1}>
+			{/* Left column */}
+			<Box width="25%" flexDirection="column" borderStyle="single" borderColor="gray" padding={1}>
+				<Text color="gray">Left Panel</Text>
+			</Box>
 
-			{/* Center column */}
-			<Box width="50%" flexDirection="column">
+			{/* Center column with tasks */}
+			<Box width="50%" flexDirection="column" borderStyle="single" borderColor="cyan" padding={1}>
 				<TaskList />
 			</Box>
 
-			{/* Right column (empty for now) */}
-			<Box width="25%"></Box>
+			{/* Right column */}
+			<Box width="25%" flexDirection="column" borderStyle="single" borderColor="gray" padding={1}>
+				<Text color="gray">Right Panel</Text>
+			</Box>
 		</Box>
 	);
 };

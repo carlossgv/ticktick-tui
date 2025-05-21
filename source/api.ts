@@ -1,7 +1,8 @@
 import axios from 'axios';
+import { Task } from './types/tasks.types.js';
 
 // Dummy function for now, to be implemented later with real endpoint
-export const fetchInboxTasks = async () => {
+export const fetchTasks = async (): Promise<Task[]> => {
 	return [{
 		id: '1',
 		title: 'Sample Task 1',
