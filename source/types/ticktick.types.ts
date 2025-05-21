@@ -1,0 +1,74 @@
+export type TickTickMainResponse = {
+	inboxId: string;
+	syncTaskBean: {
+		update: TickTickTask[];
+	};
+};
+
+export type TickTickTask = {
+	id: string;
+	projectId: string;
+	// sortOrder: number;
+	title: string;
+	// content: string;
+	desc: string;
+	// timeZone: string;
+	// isFloating: boolean;
+	// isAllDay: boolean;
+	// reminder: string;
+	// reminders: string[];
+	// repeatFirstDate: string;
+	// repeatFlag: string;
+	// exDate: string[];
+	// repeatTaskId: string;
+	// priority: number;
+	// status: number;
+	// // TODO: refine this type
+	// items: any[]; // You can refine this if you know the structure
+	// progress: number;
+	// modifiedTime: string;
+	// etag: string;
+	// deleted: number;
+	// createdTime: string;
+	// creator: number;
+	// repeatFrom: string;
+	tags: string[];
+	// attachments: any[]; // You can refine this too
+	// commentCount: number;
+	// focusSummaries: any[]; // Same here
+	// columnId: string;
+	// kind: string;
+	// imgMode: number;
+};
+
+// Types
+export type LoginResponse = {
+	token: string;
+};
+
+export type ErrorLoginResponse = {
+	errorId: string;
+	errorCode: string;
+	errorMessage: string;
+	data: {
+		remainderTimes: number;
+	};
+};
+
+export type TaskBody = {
+	title: string;
+	id?: string;
+	tags?: string[];
+};
+
+export enum Action {
+	Add = 'add',
+	Update = 'update',
+	Delete = 'delete',
+}
+
+export type HandleTasksBody = {
+	add: TaskBody[];
+	update: TaskBody[];
+	delete: TaskBody[];
+};
