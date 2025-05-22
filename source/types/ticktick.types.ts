@@ -55,6 +55,47 @@ export type ErrorLoginResponse = {
 	};
 };
 
+export type TickTickProject= {
+	id: string;
+	name: string;
+	// isOwner: boolean;
+	// color: string;
+	// sortOrder: number;
+	// sortOption: {
+	// 	groupBy: string;
+	// 	orderBy: string;
+	// };
+	// sortType: string;
+	// userCount: number;
+	// etag: string;
+	// modifiedTime: string;
+	// inAll: boolean;
+	// showType: number;
+	// muted: boolean;
+	// reminderType: number;
+	// closed: boolean | null;
+	// transferred: boolean | null;
+	// groupId: string | null;
+	// viewMode: string;
+	// notificationOptions: any[]; // You can replace `any` with a more specific type if known
+	// teamId: string | null;
+	// permission: any | null; // You can refine this too
+	// kind: string;
+	// timeline: {
+	// 	range: any | null; // Again, refine if needed
+	// 	sortType: string;
+	// 	sortOption: {
+	// 		groupBy: string;
+	// 		orderBy: string;
+	// 	};
+	// };
+	// needAudit: boolean;
+	// barcodeNeedAudit: boolean;
+	// openToTeam: boolean | null;
+	// teamMemberPermission: any | null; // Refine if details are available
+	// source: number;
+}
+
 export type TaskBody = {
 	title: string;
 	id?: string;

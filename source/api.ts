@@ -8,13 +8,11 @@ import {
 	HandleTasksBody,
 	TaskBody,
 	TickTickMainResponse,
+	TickTickProject,
 	TickTickTask,
 } from './types/ticktick.types.js';
 import { Task } from './types/tasks.types.js';
-
-const TICKTICK_URL = 'https://api.ticktick.com/api/v2';
-const X_DEVICE_HEADER = `{"platform":"web","os":"macOS 10.15.7","device":"Chrome 121.0.0.0","name":"","version":5070,"id":"65bcdf6491ea1a2e7db71fbe","channel":"website","campaign":"","websocket":""}`;
-const DATA_FILE_PATH = '.ticktick_data';
+import { Project } from './types/project.types.js';
 
 function getFilePath(filename: string): string {
 	const home = os.homedir();
@@ -25,14 +23,15 @@ function getFilePath(filename: string): string {
 export class TickTickClient {
 	private cookieFile: string;
 	private axiosInstance: AxiosInstance;
-	private ticktickUrl: string = TICKTICK_URL;
-	private xDeviceHeader: string = X_DEVICE_HEADER;
+	private ticktickUrl: string = 'https://api.ticktick.com/api/v2';
+	private xDeviceHeader: string = `{"platform":"web","os":"macOS 10.15.7","device":"Chrome 121.0.0.0","name":"","version":5070,"id":"65bcdf6491ea1a2e7db71fbe","channel":"website","campaign":"","websocket":""}`;
 	private headers: Record<string, string> = {
 		'Content-Type': 'application/json',
-		'x-device': X_DEVICE_HEADER,
+		'x-device': this.xDeviceHeader,
 	};
-	private dataFilePath: string = DATA_FILE_PATH;
-	public inboxId: string | null = null;
+	private dataFilePath: string = '.ticktick_data';
+	private inboxId: string | null = null;
+	public mainData: TickTickMainResponse | null = null;
 
 	constructor() {
 		this.cookieFile = getFilePath(this.dataFilePath);
@@ -43,7 +42,8 @@ export class TickTickClient {
 	}
 
 	public async init(): Promise<void> {
-		this.inboxId = await this.getInboxId();
+		this.mainData = await this.getMainData();
+		this.inboxId = this.setInboxId();
 	}
 
 	private async getSessionCookies(): Promise<string[]> {
@@ -55,7 +55,7 @@ export class TickTickClient {
 		try {
 			const body = { username, password };
 			const response = await this.axiosInstance.post(
-				`${TICKTICK_URL}/user/signon?wc=true&remember=true`,
+				`${this.ticktickUrl}/user/signon?wc=true&remember=true`,
 				body,
 			);
 
@@ -78,7 +78,7 @@ export class TickTickClient {
 	async getUserInfo(): Promise<any> {
 		const cookies = await this.getSessionCookies();
 		const response = await this.axiosInstance.get(
-			`${TICKTICK_URL}/batch/check/0`,
+			`${this.ticktickUrl}/batch/check/0`,
 			{
 				headers: {
 					Cookie: cookies.join(';'),
@@ -92,7 +92,7 @@ export class TickTickClient {
 	async getMainData(): Promise<TickTickMainResponse> {
 		const cookies = await this.getSessionCookies();
 		const response = await this.axiosInstance.get<TickTickMainResponse>(
-			`${TICKTICK_URL}/batch/check/0`,
+			`${this.ticktickUrl}/batch/check/0`,
 			{
 				headers: {
 					Cookie: cookies.join(';'),
@@ -107,9 +107,8 @@ export class TickTickClient {
 		return response.data;
 	}
 
-	async fetchTasksByProjectId(projectId: string): Promise<TickTickTask[]> {
-		const mainData = await this.getMainData();
-		const tasks = mainData.syncTaskBean.update.filter(
+	getTasksByProjectId(projectId: string): Task[] {
+		const tasks = this.mainData!.syncTaskBean.update.filter(
 			task => task.projectId === projectId,
 		);
 
@@ -117,7 +116,7 @@ export class TickTickClient {
 			throw new Error('Invalid task data format');
 		}
 
-		return tasks
+		return tasks.map(this.mapTickTickTaskToTask);
 	}
 
 	mapTickTickTaskToTask(tickTickTask: TickTickTask): Task {
@@ -129,14 +128,8 @@ export class TickTickClient {
 		};
 	}
 
-	async getInboxTasks(): Promise<Task[]> {
-		if (!this.inboxId) {
-			this.inboxId = await this.getInboxId();
-		}
-
-		const tasks = await this.fetchTasksByProjectId(this.inboxId);
-
-		return tasks.map(this.mapTickTickTaskToTask);
+	getInboxTasks(): Task[] {
+		return this.getTasksByProjectId(this.inboxId!);
 	}
 
 	async fetchTasks(): Promise<TickTickTask[]> {
@@ -150,12 +143,15 @@ export class TickTickClient {
 		return tasks;
 	}
 
-	async getInboxId(): Promise<string> {
-		const mainData = await this.getMainData();
-		if (!mainData.inboxId) {
-			throw new Error('Inbox ID is missing in response');
+	private setInboxId(): string {
+		return this.mainData!.inboxId;
+	}
+
+	getInboxId(): string {
+		if (!this.inboxId) {
+			throw new Error('Inbox ID is not set. Call init() first.');
 		}
-		return mainData.inboxId;
+		return this.inboxId;
 	}
 
 	async handleTasks(tasksList: TaskBody[], action: Action): Promise<void> {
@@ -173,7 +169,7 @@ export class TickTickClient {
 		const cookies = await this.getSessionCookies();
 
 		const response = await this.axiosInstance.post(
-			`${TICKTICK_URL}/batch/task`,
+			`${this.ticktickUrl}/batch/task`,
 			body,
 			{
 				headers: {
@@ -183,5 +179,26 @@ export class TickTickClient {
 		);
 
 		console.log('Task operation result:', response.data);
+	}
+
+	private async fetchProjects(): Promise<TickTickProject[]> {
+		const cookies = await this.getSessionCookies();
+		const response = await this.axiosInstance.get<TickTickProject[]>(
+			`${this.ticktickUrl}/projects`,
+			{
+				headers: {
+					Cookie: cookies.join(';'),
+				},
+			},
+		);
+		return response.data;
+	}
+
+	async getProjects(): Promise<Project[]> {
+		const projects = await this.fetchProjects();
+		return projects.map(project => ({
+			id: project.id,
+			name: project.name,
+		}));
 	}
 }
