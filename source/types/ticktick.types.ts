@@ -10,8 +10,8 @@ export type TickTickTask = {
 	projectId: string;
 	// sortOrder: number;
 	title: string;
-	// content: string;
-	desc: string;
+	content: string;
+	// desc: string;
 	// timeZone: string;
 	// isFloating: boolean;
 	// isAllDay: boolean;

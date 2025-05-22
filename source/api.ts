@@ -1,4 +1,4 @@
-import axios, {AxiosInstance} from 'axios';
+import axios, { AxiosInstance } from 'axios';
 import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
@@ -10,6 +10,7 @@ import {
 	TickTickMainResponse,
 	TickTickTask,
 } from './types/ticktick.types.js';
+import { Task } from './types/tasks.types.js';
 
 const TICKTICK_URL = 'https://api.ticktick.com/api/v2';
 const X_DEVICE_HEADER = `{"platform":"web","os":"macOS 10.15.7","device":"Chrome 121.0.0.0","name":"","version":5070,"id":"65bcdf6491ea1a2e7db71fbe","channel":"website","campaign":"","websocket":""}`;
@@ -52,7 +53,7 @@ export class TickTickClient {
 
 	async login(username: string, password: string): Promise<void> {
 		try {
-			const body = {username, password};
+			const body = { username, password };
 			const response = await this.axiosInstance.post(
 				`${TICKTICK_URL}/user/signon?wc=true&remember=true`,
 				body,
@@ -116,15 +117,26 @@ export class TickTickClient {
 			throw new Error('Invalid task data format');
 		}
 
-		return tasks;
+		return tasks
 	}
 
-	async getInboxTasks(): Promise<TickTickTask[]> {
+	mapTickTickTaskToTask(tickTickTask: TickTickTask): Task {
+		return {
+			title: tickTickTask.title,
+			id: tickTickTask.id,
+			content: tickTickTask.content,
+			tags: tickTickTask.tags,
+		};
+	}
+
+	async getInboxTasks(): Promise<Task[]> {
 		if (!this.inboxId) {
 			this.inboxId = await this.getInboxId();
 		}
 
-		return await this.fetchTasksByProjectId(this.inboxId);
+		const tasks = await this.fetchTasksByProjectId(this.inboxId);
+
+		return tasks.map(this.mapTickTickTaskToTask);
 	}
 
 	async fetchTasks(): Promise<TickTickTask[]> {
