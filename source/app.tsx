@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Text, useInput } from 'ink';
-import TaskList from './task-list.js';
+import { Box, Newline, Text, useInput } from 'ink';
+import TaskList from './components/task-list.js';
 import { TickTickClient } from './clients/ticktick.client.js';
 import { Task } from './types/tasks.types.js';
 import { Project } from './types/project.types.js';
-import ProjectList from './project-list.js';
+import ProjectList from './components/project-list.js';
 import { convertStringToTaskBody } from './utils/text-parser.js';
 import { Action } from './types/ticktick.types.js';
+import NewTaskInput from './components/new-task-input.js';
 
 const App = () => {
 	const [tasks, setTasks] = useState<Task[]>([]);
@@ -149,12 +150,11 @@ const App = () => {
 				borderColor={selectedColumn === 1 ? 'green' : 'gray'}
 			>
 
+
 				{isAdding && (
-					<Box marginBottom={1}>
-						<Text color="cyan">➤ </Text>
-						<Text color="white">{newTaskInput}</Text>
-					</Box>
+					<NewTaskInput text={newTaskInput} />
 				)}
+
 				<TaskList
 					tasks={tasks}
 					selectedIndex={selectedTaskIndex}
@@ -176,7 +176,7 @@ const App = () => {
 						{selectedTask.tags?.length > 0 && (
 							<Text color="yellow">{`#${selectedTask.tags.join('# ')}`}</Text>
 						)}
-						<Box marginTop={1} />
+						<Newline />
 						<Text color="white">{selectedTask.content}</Text>
 					</>
 				) : (

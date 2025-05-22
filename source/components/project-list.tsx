@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Text } from 'ink';
-import { Project } from './types/project.types.js';
+import { Project } from '../types/project.types.js';
 
 type ProjectWithAmount = Project & {
 	amount: number;

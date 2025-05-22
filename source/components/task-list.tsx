@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Text } from 'ink';
-import { Task } from './types/tasks.types.js';
+import { Task } from '../types/tasks.types.js';
 
 type TaskListProps = {
 	tasks: Task[];
