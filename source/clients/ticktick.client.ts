@@ -10,9 +10,9 @@ import {
 	TickTickMainResponse,
 	TickTickProject,
 	TickTickTask,
-} from './types/ticktick.types.js';
-import { Task } from './types/tasks.types.js';
-import { Project } from './types/project.types.js';
+} from '../types/ticktick.types.js';
+import { Project } from '../types/project.types.js';
+import { Task } from '../types/tasks.types.js';
 
 function getFilePath(filename: string): string {
 	const home = os.homedir();
@@ -87,6 +87,11 @@ export class TickTickClient {
 		);
 		console.log('User Info:', response.data);
 		return response.data;
+	}
+
+	async refreshMainData(): Promise<void> {
+		this.mainData = await this.getMainData();
+		this.inboxId = this.setInboxId();
 	}
 
 	async getMainData(): Promise<TickTickMainResponse> {

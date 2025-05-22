@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Text, useInput } from 'ink';
 import TaskList from './task-list.js';
-import { TickTickClient } from './api.js';
+import { TickTickClient } from './clients/ticktick.client.js';
 import { Task } from './types/tasks.types.js';
 import { Project } from './types/project.types.js';
 import ProjectList from './project-list.js';
+import { convertStringToTaskBody } from './utils/text-parser.js';
+import { Action } from './types/ticktick.types.js';
 
 const App = () => {
 	const [tasks, setTasks] = useState<Task[]>([]);
@@ -13,6 +15,8 @@ const App = () => {
 	const [selectedProjectIndex, setSelectedProjectIndex] = useState<number>(0);
 	const [selectedColumn, setSelectedColumn] = useState<number>(1); // 0 = left, 1 = center, 2 = right
 	const [client, setClient] = useState<TickTickClient | null>(null);
+	const [isAdding, setIsAdding] = useState(false);
+	const [newTaskInput, setNewTaskInput] = useState('');
 
 	useEffect(() => {
 		const fetchData = async () => {
@@ -52,6 +56,36 @@ const App = () => {
 	const selectedTask = tasks[selectedTaskIndex];
 
 	useInput((input, key) => {
+		// If adding a task, intercept key handling
+		if (isAdding) {
+			if (key.return) {
+				if (newTaskInput.trim()) {
+					handleAddNewTask(newTaskInput.trim());
+				}
+				setNewTaskInput('');
+				setIsAdding(false);
+				return;
+			}
+			if (key.escape) {
+				setNewTaskInput('');
+				setIsAdding(false);
+				return;
+			}
+			if (key.delete || key.backspace) {
+				setNewTaskInput(newTaskInput.slice(0, -1));
+			} else {
+				setNewTaskInput(newTaskInput + input);
+			}
+			return;
+		}
+
+		// Normal navigation
+		if (input === 'n') {
+			setIsAdding(true);
+			setNewTaskInput('');
+			return;
+		}
+
 		// Column navigation
 		if (key.leftArrow || input === 'h') {
 			setSelectedColumn(col => (col > 0 ? col - 1 : col));
@@ -74,6 +108,19 @@ const App = () => {
 			}
 		}
 	});
+
+	const handleAddNewTask = async (text: string) => {
+		const taskBody = convertStringToTaskBody(text);
+		// TODO: implement logic to send to API and refresh tasks
+		await client?.handleTasks([taskBody], Action.Add);
+		await client?.refreshMainData();
+		const project = projects[selectedProjectIndex];
+		if (!project) return;
+		setTasks(client?.getTasksByProjectId(project.id) || []);
+		setSelectedTaskIndex(0);
+		setSelectedProjectIndex(projects.indexOf(project));
+		setSelectedColumn(1);
+	};
 
 	return (
 		<Box flexDirection="row" width="100%" padding={1} gap={0}>
@@ -101,6 +148,13 @@ const App = () => {
 				borderStyle="single"
 				borderColor={selectedColumn === 1 ? 'green' : 'gray'}
 			>
+
+				{isAdding && (
+					<Box marginBottom={1}>
+						<Text color="cyan">➤ </Text>
+						<Text color="white">{newTaskInput}</Text>
+					</Box>
+				)}
 				<TaskList
 					tasks={tasks}
 					selectedIndex={selectedTaskIndex}
