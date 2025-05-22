@@ -7,6 +7,7 @@ import {
 	ErrorLoginResponse,
 	HandleTasksBody,
 	TaskBody,
+	TaskOperationResponse,
 	TickTickMainResponse,
 	TickTickProject,
 	TickTickTask,
@@ -173,7 +174,7 @@ export class TickTickClient {
 		body[action] = tasksList;
 		const cookies = await this.getSessionCookies();
 
-		const response = await this.axiosInstance.post(
+		const response = await this.axiosInstance.post<TaskOperationResponse>(
 			`${this.ticktickUrl}/batch/task`,
 			body,
 			{
@@ -183,7 +184,9 @@ export class TickTickClient {
 			},
 		);
 
-		console.log('Task operation result:', response.data);
+		if (!response.data || Object.keys(response.data.id2error).length > 0) {
+			console.error(`Error in task operation: ${JSON.stringify(response.data.id2error)}`);
+		}
 	}
 
 	private async fetchProjects(): Promise<TickTickProject[]> {
