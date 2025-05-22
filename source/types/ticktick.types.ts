@@ -113,3 +113,8 @@ export type HandleTasksBody = {
 	update: TaskBody[];
 	delete: TaskBody[];
 };
+
+export type TaskOperationResponse = {
+	id2etag: Record<string, string>;
+	id2error: Record<string, string>;
+}
