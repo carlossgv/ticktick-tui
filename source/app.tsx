@@ -1,9 +1,9 @@
-import React, {useEffect, useState} from 'react';
-import {Box, Text, useInput} from 'ink';
+import React, { useEffect, useState } from 'react';
+import { Box, Text, useInput } from 'ink';
 import TaskList from './task-list.js';
-import {TickTickClient} from './api.js';
-import {Task} from './types/tasks.types.js';
-import {Project} from './types/project.types.js';
+import { TickTickClient } from './api.js';
+import { Task } from './types/tasks.types.js';
+import { Project } from './types/project.types.js';
 import ProjectList from './project-list.js';
 
 const App = () => {
@@ -85,7 +85,10 @@ const App = () => {
 				borderColor={selectedColumn === 0 ? 'green' : 'gray'}
 			>
 				<ProjectList
-					projects={projects}
+					projects={projects.map(p => {
+						const amount = client?.getTasksByProjectId(p.id).length || 0;
+						return { ...p, amount };
+					})}
 					selectedIndex={selectedProjectIndex}
 					onSelect={setSelectedProjectIndex}
 				/>

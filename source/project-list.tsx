@@ -2,8 +2,12 @@ import React from 'react';
 import { Box, Text } from 'ink';
 import { Project } from './types/project.types.js';
 
+type ProjectWithAmount = Project & {
+	amount: number;
+};
+
 type ProjectListProps = {
-	projects: Project[];
+	projects: ProjectWithAmount[];
 	selectedIndex: number;
 	onSelect: (index: number) => void;
 };
@@ -18,7 +22,7 @@ const ProjectList = ({ projects, selectedIndex }: ProjectListProps) => {
 					color={index === selectedIndex ? 'black' : undefined}
 					backgroundColor={index === selectedIndex ? 'cyan' : undefined}
 				>
-					{project.name}
+					{project.name} {project.amount > 0 ? `(${project.amount})` : ''}
 				</Text>
 			))}
 		</Box>
