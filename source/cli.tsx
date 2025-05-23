@@ -1,11 +1,10 @@
 #!/usr/bin/env node
 import React from 'react';
 import meow from 'meow';
-import { render } from 'ink';
+import {render} from 'ink';
 import App from './app.js';
-import { convertStringToTaskBody } from './utils/text-parser.js';
-import { TickTickClient } from './clients/ticktick.client.js';
-import { Action } from './types/ticktick.types.js';
+import {convertStringToTaskBody} from './utils/text-parser.js';
+import {TickTickClient} from './clients/ticktick.client.js';
 
 // Mock quick add handler
 const quickAddTask = async (text: string) => {
@@ -14,7 +13,7 @@ const quickAddTask = async (text: string) => {
 		const taskBody = convertStringToTaskBody(text);
 		const client = new TickTickClient();
 		client.init();
-		await client.handleTasks([taskBody], Action.Add);
+		await client.addTasks([taskBody]);
 		console.log('Task added successfully');
 		process.exit(0);
 	} catch (err) {

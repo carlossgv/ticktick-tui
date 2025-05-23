@@ -55,7 +55,7 @@ export type ErrorLoginResponse = {
 	};
 };
 
-export type TickTickProject= {
+export type TickTickProject = {
 	id: string;
 	name: string;
 	// isOwner: boolean;
@@ -96,6 +96,11 @@ export type TickTickProject= {
 	// source: number;
 }
 
+export type DeleteTaskParams = {
+	taskId: string;
+	projectId: string;
+}
+
 export type TaskBody = {
 	title: string;
 	id?: string;
@@ -111,7 +116,7 @@ export enum Action {
 export type HandleTasksBody = {
 	add: TaskBody[];
 	update: TaskBody[];
-	delete: TaskBody[];
+	delete: DeleteTaskParams[];
 };
 
 export type TaskOperationResponse = {

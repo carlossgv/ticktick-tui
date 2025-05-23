@@ -6,7 +6,7 @@ import { Task } from './types/tasks.types.js';
 import { Project } from './types/project.types.js';
 import ProjectList from './components/project-list.js';
 import { convertStringToTaskBody } from './utils/text-parser.js';
-import { Action } from './types/ticktick.types.js';
+import { DeleteTaskParams } from './types/ticktick.types.js';
 import NewTaskInput from './components/new-task-input.js';
 
 const App = () => {
@@ -18,6 +18,7 @@ const App = () => {
 	const [client, setClient] = useState<TickTickClient | null>(null);
 	const [isAdding, setIsAdding] = useState(false);
 	const [newTaskInput, setNewTaskInput] = useState('');
+	const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 
 	useEffect(() => {
 		const fetchData = async () => {
@@ -57,7 +58,6 @@ const App = () => {
 	const selectedTask = tasks[selectedTaskIndex];
 
 	useInput((input, key) => {
-		// If adding a task, intercept key handling
 		if (isAdding) {
 			if (key.return) {
 				if (newTaskInput.trim()) {
@@ -80,40 +80,72 @@ const App = () => {
 			return;
 		}
 
-		// Normal navigation
+		if (showDeleteConfirmation) {
+			if (input === 'y' || key.return) {
+				handleDeleteTask();
+				setShowDeleteConfirmation(false);
+			} else if (input === 'n' || key.escape) {
+				setShowDeleteConfirmation(false);
+			}
+			return;
+		}
+
 		if (input === 'n') {
 			setIsAdding(true);
 			setNewTaskInput('');
 			return;
 		}
 
-		// Column navigation
+		if (!isAdding && selectedColumn === 1 && input === 'd') {
+			setShowDeleteConfirmation(true);
+			return;
+		}
+
 		if (key.leftArrow || input === 'h') {
 			setSelectedColumn(col => (col > 0 ? col - 1 : col));
 		} else if (key.rightArrow || input === 'l') {
 			setSelectedColumn(col => (col < 2 ? col + 1 : col));
 		}
 
-		// Navigation inside columns
-		if (selectedColumn === 0) {
+if (selectedColumn === 0) {
 			if (key.upArrow || input === 'k') {
-				setSelectedProjectIndex(i => (i > 0 ? i - 1 : i));
+				setSelectedProjectIndex(i => (i > 0 ? i - 1 : projects.length - 1));
 			} else if (key.downArrow || input === 'j') {
-				setSelectedProjectIndex(i => (i < projects.length - 1 ? i + 1 : i));
+				setSelectedProjectIndex(i => (i < projects.length - 1 ? i + 1 : 0));
 			}
 		} else if (selectedColumn === 1) {
 			if (key.upArrow || input === 'k') {
-				setSelectedTaskIndex(i => (i > 0 ? i - 1 : i));
+				setSelectedTaskIndex(i => (i > 0 ? i - 1 : tasks.length - 1));
 			} else if (key.downArrow || input === 'j') {
-				setSelectedTaskIndex(i => (i < tasks.length - 1 ? i + 1 : i));
+				setSelectedTaskIndex(i => (i < tasks.length - 1 ? i + 1 : 0));
 			}
 		}
 	});
 
 	const handleAddNewTask = async (text: string) => {
 		const taskBody = convertStringToTaskBody(text);
-		// TODO: implement logic to send to API and refresh tasks
-		await client?.handleTasks([taskBody], Action.Add);
+		await client?.addTasks([taskBody]);
+		await client?.refreshMainData();
+		const project = projects[selectedProjectIndex];
+		if (!project) return;
+		setTasks(client?.getTasksByProjectId(project.id) || []);
+		setSelectedTaskIndex(0);
+		setSelectedProjectIndex(projects.indexOf(project));
+		setSelectedColumn(1);
+	};
+
+	const handleDeleteTask = async () => {
+		// TODO: implement task deletion logic
+		console.log('Deleting task:', selectedTask?.title);
+
+		const deleteTaskBody: DeleteTaskParams = {
+			taskId: selectedTask?.id || '',
+			projectId: projects[selectedProjectIndex]?.id || '',
+		}
+
+		console.debug('Delete task body:', deleteTaskBody);
+
+		await client?.deleteTasks([deleteTaskBody]);
 		await client?.refreshMainData();
 		const project = projects[selectedProjectIndex];
 		if (!project) return;
@@ -125,7 +157,6 @@ const App = () => {
 
 	return (
 		<Box flexDirection="row" width="100%" padding={1} gap={0}>
-			{/* Left column */}
 			<Box
 				width="25%"
 				flexDirection="column"
@@ -142,27 +173,27 @@ const App = () => {
 				/>
 			</Box>
 
-			{/* Center column */}
 			<Box
 				width="50%"
 				flexDirection="column"
 				borderStyle="single"
 				borderColor={selectedColumn === 1 ? 'green' : 'gray'}
 			>
-
-
-				{isAdding && (
-					<NewTaskInput text={newTaskInput} />
-				)}
-
+				{isAdding && <NewTaskInput text={newTaskInput} />}
 				<TaskList
 					tasks={tasks}
 					selectedIndex={selectedTaskIndex}
 					onSelect={setSelectedTaskIndex}
 				/>
+				{showDeleteConfirmation && (
+					<Box marginTop={1} padding={1} borderStyle="round" borderColor="red">
+						<Text>
+							Delete task "{selectedTask?.title}"? (y/n)
+						</Text>
+					</Box>
+				)}
 			</Box>
 
-			{/* Right column */}
 			<Box
 				width="25%"
 				flexDirection="column"

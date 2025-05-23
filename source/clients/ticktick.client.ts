@@ -3,14 +3,14 @@ import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
 import {
-	Action,
 	ErrorLoginResponse,
 	HandleTasksBody,
-	TaskBody,
+	TaskBody as AddTaskParams,
 	TaskOperationResponse,
 	TickTickMainResponse,
 	TickTickProject,
 	TickTickTask,
+	DeleteTaskParams,
 } from '../types/ticktick.types.js';
 import { Project } from '../types/project.types.js';
 import { Task } from '../types/tasks.types.js';
@@ -86,7 +86,6 @@ export class TickTickClient {
 				},
 			},
 		);
-		console.log('User Info:', response.data);
 		return response.data;
 	}
 
@@ -160,18 +159,37 @@ export class TickTickClient {
 		return this.inboxId;
 	}
 
-	async handleTasks(tasksList: TaskBody[], action: Action): Promise<void> {
-		if (action === Action.Update && tasksList.some(t => !t.id)) {
-			throw new Error('Task ID is required for updates');
-		}
+	async deleteTasks(tasks: DeleteTaskParams[]): Promise<void> {
+		const cookies = await this.getSessionCookies();
 
 		const body: HandleTasksBody = {
 			add: [],
 			update: [],
+			delete: tasks,
+		};
+		const response = await this.axiosInstance.post<TaskOperationResponse>(
+			`${this.ticktickUrl}/batch/task`,
+			body,
+			{
+				headers: {
+					Cookie: cookies.join(';'),
+				},
+			},
+		);
+
+		if (!response.data || Object.keys(response.data.id2error).length > 0) {
+			console.error(`Error in task operation: ${JSON.stringify(response.data.id2error)}`);
+		}
+	}
+
+	async addTasks(tasks: AddTaskParams[]): Promise<void> {
+
+		const body: HandleTasksBody = {
+			add: tasks,
+			update: [],
 			delete: [],
 		};
 
-		body[action] = tasksList;
 		const cookies = await this.getSessionCookies();
 
 		const response = await this.axiosInstance.post<TaskOperationResponse>(
