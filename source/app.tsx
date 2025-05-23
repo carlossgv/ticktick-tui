@@ -127,6 +127,7 @@ const App = () => {
 
 	const handleAddNewTask = async (text: string) => {
 		const taskBody = convertStringToTaskBody(text);
+		taskBody.projectId = projects[selectedProjectIndex]?.id;
 		await client?.addTasks([taskBody]);
 		await client?.refreshMainData();
 		const project = projects[selectedProjectIndex];
@@ -138,15 +139,10 @@ const App = () => {
 	};
 
 	const handleDeleteTask = async () => {
-		// TODO: implement task deletion logic
-		console.log('Deleting task:', selectedTask?.title);
-
 		const deleteTaskBody: DeleteTaskParams = {
 			taskId: selectedTask?.id || '',
 			projectId: projects[selectedProjectIndex]?.id || '',
 		};
-
-		console.debug('Delete task body:', deleteTaskBody);
 
 		await client?.deleteTasks([deleteTaskBody]);
 		await client?.refreshMainData();
@@ -159,61 +155,77 @@ const App = () => {
 	};
 
 	return (
-		<Box flexDirection="row" width="100%" padding={1} gap={0}>
-			<Box
-				width="25%"
-				flexDirection="column"
-				borderStyle="single"
-				borderColor={selectedColumn === 0 ? 'green' : 'gray'}
-			>
-				<ProjectList
-					projects={projects.map(p => {
-						const amount = client?.getTasksByProjectId(p.id).length || 0;
-						return {...p, amount};
-					})}
-					selectedIndex={selectedProjectIndex}
-					onSelect={setSelectedProjectIndex}
-				/>
-			</Box>
+		<Box flexDirection="column" width="100%">
+			<Box flexDirection="row" width="100%">
+				<Box
+					width="25%"
+					flexDirection="column"
+					borderStyle="single"
+					borderColor={selectedColumn === 0 ? 'green' : 'gray'}
+				>
+					<ProjectList
+						projects={projects.map(p => {
+							const amount = client?.getTasksByProjectId(p.id).length || 0;
+							return {...p, amount};
+						})}
+						selectedIndex={selectedProjectIndex}
+						onSelect={setSelectedProjectIndex}
+					/>
+				</Box>
 
-			<Box
-				width="50%"
-				flexDirection="column"
-				borderStyle="single"
-				borderColor={selectedColumn === 1 ? 'green' : 'gray'}
-			>
-				{isAdding && <NewTaskInput text={newTaskInput} />}
-				<TaskList
-					tasks={tasks}
-					selectedIndex={selectedTaskIndex}
-					onSelect={setSelectedTaskIndex}
-				/>
-				{showDeleteConfirmation && (
-					<Box marginTop={1} padding={1} borderStyle="round" borderColor="red">
-						<Text>Delete task "{selectedTask?.title}"? (y/n)</Text>
-					</Box>
-				)}
-			</Box>
+				<Box
+					width="50%"
+					flexDirection="column"
+					borderStyle="single"
+					borderColor={selectedColumn === 1 ? 'green' : 'gray'}
+				>
+					{isAdding && <NewTaskInput text={newTaskInput} />}
+					<TaskList
+						tasks={tasks}
+						selectedIndex={selectedTaskIndex}
+						onSelect={setSelectedTaskIndex}
+					/>
+					{showDeleteConfirmation && (
+						<Box
+							marginTop={1}
+							padding={1}
+							borderStyle="round"
+							borderColor="red"
+						>
+							<Text>Delete task &quot;{selectedTask?.title}&quot;? (y/n)</Text>
+						</Box>
+					)}
+				</Box>
 
+				<Box
+					width="25%"
+					flexDirection="column"
+					borderStyle="single"
+					borderColor={selectedColumn === 2 ? 'green' : 'gray'}
+					padding={1}
+				>
+					{selectedTask ? (
+						<>
+							<Text color="green">{selectedTask.title}</Text>
+							{selectedTask.tags?.length > 0 && (
+								<Text color="yellow">{`#${selectedTask.tags.join('# ')}`}</Text>
+							)}
+							<Newline />
+							<Text color="white">{selectedTask.content}</Text>
+						</>
+					) : (
+						<Text color="gray">No task selected</Text>
+					)}
+				</Box>
+			</Box>
 			<Box
-				width="25%"
-				flexDirection="column"
+				width="100%"
+				paddingX={1}
+				paddingY={0}
 				borderStyle="single"
-				borderColor={selectedColumn === 2 ? 'green' : 'gray'}
-				padding={1}
+				borderColor="gray"
 			>
-				{selectedTask ? (
-					<>
-						<Text color="green">{selectedTask.title}</Text>
-						{selectedTask.tags?.length > 0 && (
-							<Text color="yellow">{`#${selectedTask.tags.join('# ')}`}</Text>
-						)}
-						<Newline />
-						<Text color="white">{selectedTask.content}</Text>
-					</>
-				) : (
-					<Text color="gray">No task selected</Text>
-				)}
+				<Text>arrows / hjkl: move | (n)ew task | (d)elete task </Text>
 			</Box>
 		</Box>
 	);

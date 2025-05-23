@@ -1,4 +1,4 @@
-import axios, {AxiosInstance} from 'axios';
+import axios, { AxiosInstance } from 'axios';
 import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
@@ -12,8 +12,8 @@ import {
 	TickTickTask,
 	DeleteTaskParams,
 } from '../types/ticktick.types.js';
-import {Project} from '../types/project.types.js';
-import {Task} from '../types/tasks.types.js';
+import { Project } from '../types/project.types.js';
+import { Task } from '../types/tasks.types.js';
 
 function getFilePath(filename: string): string {
 	const home = os.homedir();
@@ -54,7 +54,7 @@ export class TickTickClient {
 
 	async login(username: string, password: string): Promise<void> {
 		try {
-			const body = {username, password};
+			const body = { username, password };
 			const response = await this.axiosInstance.post(
 				`${this.ticktickUrl}/user/signon?wc=true&remember=true`,
 				body,
@@ -121,7 +121,10 @@ export class TickTickClient {
 			throw new Error('Invalid task data format');
 		}
 
-		return tasks.map(this.mapTickTickTaskToTask);
+		// Sort tasks in descending order of sortOrder
+		const sortedTasks = tasks.sort((a, b) => a.sortOrder - b.sortOrder);
+
+		return sortedTasks.map(this.mapTickTickTaskToTask);
 	}
 
 	mapTickTickTaskToTask(tickTickTask: TickTickTask): Task {
@@ -130,6 +133,9 @@ export class TickTickClient {
 			id: tickTickTask.id,
 			content: tickTickTask.content,
 			tags: tickTickTask.tags,
+			startDate: tickTickTask.startDate,
+			dueDate: tickTickTask.dueDate,
+			timeZone: tickTickTask.timeZone,
 		};
 	}
 

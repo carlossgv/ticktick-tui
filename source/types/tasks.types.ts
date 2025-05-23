@@ -3,4 +3,8 @@ export type Task = {
 	id: string;
 	content: string;
 	tags: string[];
+	startDate?: string;
+	dueDate?: string;
+	timeZone: string;
+	isAllDay?: boolean;
 };
