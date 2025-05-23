@@ -94,17 +94,20 @@ export type TickTickProject = {
 	// openToTeam: boolean | null;
 	// teamMemberPermission: any | null; // Refine if details are available
 	// source: number;
-}
+};
 
 export type DeleteTaskParams = {
 	taskId: string;
 	projectId: string;
-}
+};
 
 export type TaskBody = {
 	title: string;
 	id?: string;
 	tags?: string[];
+	startDate?: string;
+	dueDate?: string;
+	timeZone?: string;
 };
 
 export enum Action {
@@ -122,4 +125,4 @@ export type HandleTasksBody = {
 export type TaskOperationResponse = {
 	id2etag: Record<string, string>;
 	id2error: Record<string, string>;
-}
+};

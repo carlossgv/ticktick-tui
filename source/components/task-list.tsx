@@ -1,6 +1,7 @@
 import React from 'react';
-import { Box, Text } from 'ink';
-import { Task } from '../types/tasks.types.js';
+import {Box, Text} from 'ink';
+import {Task} from '../types/tasks.types.js';
+import {Spinner} from '@inkjs/ui';
 
 type TaskListProps = {
 	tasks: Task[];
@@ -8,10 +9,10 @@ type TaskListProps = {
 	onSelect: (index: number) => void;
 };
 
-const TaskList = ({ tasks, selectedIndex }: TaskListProps) => {
+const TaskList = ({tasks, selectedIndex}: TaskListProps) => {
 	return (
 		<Box flexDirection="column" padding={1}>
-			{tasks.length === 0 && <Text>Loading...</Text>}
+			{tasks.length === 0 && <Spinner label="Loading" />}
 			{tasks.map((task, index) => (
 				<Text
 					key={task.id}

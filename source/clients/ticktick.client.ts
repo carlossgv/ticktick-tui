@@ -1,4 +1,4 @@
-import axios, { AxiosInstance } from 'axios';
+import axios, {AxiosInstance} from 'axios';
 import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
@@ -12,8 +12,8 @@ import {
 	TickTickTask,
 	DeleteTaskParams,
 } from '../types/ticktick.types.js';
-import { Project } from '../types/project.types.js';
-import { Task } from '../types/tasks.types.js';
+import {Project} from '../types/project.types.js';
+import {Task} from '../types/tasks.types.js';
 
 function getFilePath(filename: string): string {
 	const home = os.homedir();
@@ -54,7 +54,7 @@ export class TickTickClient {
 
 	async login(username: string, password: string): Promise<void> {
 		try {
-			const body = { username, password };
+			const body = {username, password};
 			const response = await this.axiosInstance.post(
 				`${this.ticktickUrl}/user/signon?wc=true&remember=true`,
 				body,
@@ -178,12 +178,13 @@ export class TickTickClient {
 		);
 
 		if (!response.data || Object.keys(response.data.id2error).length > 0) {
-			console.error(`Error in task operation: ${JSON.stringify(response.data.id2error)}`);
+			console.error(
+				`Error in task operation: ${JSON.stringify(response.data.id2error)}`,
+			);
 		}
 	}
 
 	async addTasks(tasks: AddTaskParams[]): Promise<void> {
-
 		const body: HandleTasksBody = {
 			add: tasks,
 			update: [],
@@ -203,7 +204,9 @@ export class TickTickClient {
 		);
 
 		if (!response.data || Object.keys(response.data.id2error).length > 0) {
-			console.error(`Error in task operation: ${JSON.stringify(response.data.id2error)}`);
+			console.error(
+				`Error in task operation: ${JSON.stringify(response.data.id2error)}`,
+			);
 		}
 	}
 

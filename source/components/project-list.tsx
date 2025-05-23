@@ -1,6 +1,7 @@
 import React from 'react';
-import { Box, Text } from 'ink';
-import { Project } from '../types/project.types.js';
+import {Box, Text} from 'ink';
+import {Project} from '../types/project.types.js';
+import {Spinner} from '@inkjs/ui';
 
 type ProjectWithAmount = Project & {
 	amount: number;
@@ -12,10 +13,10 @@ type ProjectListProps = {
 	onSelect: (index: number) => void;
 };
 
-const ProjectList = ({ projects, selectedIndex }: ProjectListProps) => {
+const ProjectList = ({projects, selectedIndex}: ProjectListProps) => {
 	return (
 		<Box flexDirection="column" padding={1}>
-			{projects.length === 0 && <Text>Loading...</Text>}
+			{projects.length === 0 && <Spinner label="Loading" />}
 			{projects.map((project, index) => (
 				<Text
 					key={project.id}

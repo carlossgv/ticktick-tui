@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from 'react';
-import { Box, Text } from 'ink';
+import React, {useEffect, useState} from 'react';
+import {Box, Text} from 'ink';
 
 type Props = {
 	text: string;
 };
 
-const NewTaskInput = ({ text }: Props) => {
+const NewTaskInput = ({text}: Props) => {
 	const [showCursor, setShowCursor] = useState(true);
 
 	useEffect(() => {

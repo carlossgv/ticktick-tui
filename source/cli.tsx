@@ -5,14 +5,13 @@ import {render} from 'ink';
 import App from './app.js';
 import {convertStringToTaskBody} from './utils/text-parser.js';
 import {TickTickClient} from './clients/ticktick.client.js';
+import prompts from 'prompts';
 
-// Mock quick add handler
 const quickAddTask = async (text: string) => {
 	try {
-		// Simulate async task creation
 		const taskBody = convertStringToTaskBody(text);
 		const client = new TickTickClient();
-		client.init();
+		await client.init();
 		await client.addTasks([taskBody]);
 		console.log('Task added successfully');
 		process.exit(0);
@@ -26,24 +25,55 @@ const cli = meow(
 	`
 	Usage
 	  $ ticktick-tui ["task to add"]
+	  $ ticktick-tui --login
+
+	Options
+	  --login, -l   Log into your TickTick account via email/password
 
 	Examples
 	  $ ticktick-tui "Buy milk #groceries"
+	  $ ticktick-tui --login
 `,
 	{
 		importMeta: import.meta,
 		flags: {
-			name: {
-				type: 'string',
+			login: {
+				type: 'boolean',
+				alias: 'l',
 			},
 		},
 	},
 );
 
-// If there's a quoted input, call the quick add logic and exit
-const quickAddText = cli.input.length > 0 ? cli.input.join(' ') : undefined;
+if (cli.flags.login) {
+	const runLoginFlow = async () => {
+		const response = await prompts([
+			{
+				type: 'text',
+				name: 'email',
+				message: 'Email:',
+			},
+			{
+				type: 'password',
+				name: 'password',
+				message: 'Password:',
+			},
+		]);
 
-if (quickAddText) {
+		const client = new TickTickClient();
+		try {
+			await client.login(response.email, response.password);
+			console.log('Login successful. Starting app...');
+			render(<App />);
+		} catch (err) {
+			console.error('Login failed:', err);
+			process.exit(1);
+		}
+	};
+
+	await runLoginFlow();
+} else if (cli.input.length > 0) {
+	const quickAddText = cli.input.join(' ');
 	await quickAddTask(quickAddText);
 } else {
 	render(<App />);

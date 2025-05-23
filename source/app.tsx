@@ -1,12 +1,12 @@
-import React, { useEffect, useState } from 'react';
-import { Box, Newline, Text, useInput } from 'ink';
+import React, {useEffect, useState} from 'react';
+import {Box, Newline, Text, useInput} from 'ink';
 import TaskList from './components/task-list.js';
-import { TickTickClient } from './clients/ticktick.client.js';
-import { Task } from './types/tasks.types.js';
-import { Project } from './types/project.types.js';
+import {TickTickClient} from './clients/ticktick.client.js';
+import {Task} from './types/tasks.types.js';
+import {Project} from './types/project.types.js';
 import ProjectList from './components/project-list.js';
-import { convertStringToTaskBody } from './utils/text-parser.js';
-import { DeleteTaskParams } from './types/ticktick.types.js';
+import {convertStringToTaskBody} from './utils/text-parser.js';
+import {DeleteTaskParams} from './types/ticktick.types.js';
 import NewTaskInput from './components/new-task-input.js';
 
 const App = () => {
@@ -26,10 +26,13 @@ const App = () => {
 			await client.init();
 			setClient(client);
 			const fetchedProjects = await client.getProjects();
-			setProjects([{
-				id: client.getInboxId(),
-				name: 'Inbox',
-			}, ...fetchedProjects]);
+			setProjects([
+				{
+					id: client.getInboxId(),
+					name: 'Inbox',
+				},
+				...fetchedProjects,
+			]);
 			const fetchedTasks = client.getInboxTasks();
 			setTasks(fetchedTasks);
 		};
@@ -107,7 +110,7 @@ const App = () => {
 			setSelectedColumn(col => (col < 2 ? col + 1 : col));
 		}
 
-if (selectedColumn === 0) {
+		if (selectedColumn === 0) {
 			if (key.upArrow || input === 'k') {
 				setSelectedProjectIndex(i => (i > 0 ? i - 1 : projects.length - 1));
 			} else if (key.downArrow || input === 'j') {
@@ -141,7 +144,7 @@ if (selectedColumn === 0) {
 		const deleteTaskBody: DeleteTaskParams = {
 			taskId: selectedTask?.id || '',
 			projectId: projects[selectedProjectIndex]?.id || '',
-		}
+		};
 
 		console.debug('Delete task body:', deleteTaskBody);
 
@@ -166,7 +169,7 @@ if (selectedColumn === 0) {
 				<ProjectList
 					projects={projects.map(p => {
 						const amount = client?.getTasksByProjectId(p.id).length || 0;
-						return { ...p, amount };
+						return {...p, amount};
 					})}
 					selectedIndex={selectedProjectIndex}
 					onSelect={setSelectedProjectIndex}
@@ -187,9 +190,7 @@ if (selectedColumn === 0) {
 				/>
 				{showDeleteConfirmation && (
 					<Box marginTop={1} padding={1} borderStyle="round" borderColor="red">
-						<Text>
-							Delete task "{selectedTask?.title}"? (y/n)
-						</Text>
+						<Text>Delete task "{selectedTask?.title}"? (y/n)</Text>
 					</Box>
 				)}
 			</Box>
