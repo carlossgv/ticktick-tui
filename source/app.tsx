@@ -3,7 +3,7 @@ import {Box, Newline, Text, useInput} from 'ink';
 import TaskList from './components/task-list.js';
 import {TickTickClient} from './clients/ticktick.client.js';
 import {Task} from './types/tasks.types.js';
-import {Project} from './types/project.types.js';
+import {List} from './types/list.types.js';
 import ProjectList from './components/project-list.js';
 import {convertStringToTaskBody} from './utils/text-parser.js';
 import {DeleteTaskParams} from './types/ticktick.types.js';
@@ -11,7 +11,7 @@ import NewTaskInput from './components/new-task-input.js';
 
 const App = () => {
 	const [tasks, setTasks] = useState<Task[]>([]);
-	const [projects, setProjects] = useState<Project[]>([]);
+	const [projects, setProjects] = useState<List[]>([]);
 	const [selectedTaskIndex, setSelectedTaskIndex] = useState<number>(0);
 	const [selectedProjectIndex, setSelectedProjectIndex] = useState<number>(0);
 	const [selectedColumn, setSelectedColumn] = useState<number>(1); // 0 = left, 1 = center, 2 = right
@@ -25,7 +25,7 @@ const App = () => {
 			const client = new TickTickClient();
 			await client.init();
 			setClient(client);
-			const fetchedProjects = await client.getProjects();
+			const fetchedProjects = await client.getLists();
 			setProjects([
 				{
 					id: client.getInboxId(),
@@ -53,7 +53,11 @@ const App = () => {
 		const selectedProject = projects.find(project => project.id === id);
 		if (selectedProject) {
 			setSelectedProjectIndex(projects.indexOf(selectedProject));
-			setTasks(client?.getTasksByProjectId(id) || []);
+			setTasks(
+				selectedProject.isFilter
+					? client?.getTasksByFilter(id) || []
+					: client?.getTasksByProjectId(id) || [],
+			);
 			setSelectedTaskIndex(0);
 		}
 	};

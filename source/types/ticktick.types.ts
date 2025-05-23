@@ -3,7 +3,34 @@ export type TickTickMainResponse = {
 	syncTaskBean: {
 		update: TickTickTask[];
 	};
+	filters: TickTickFilter[];
 };
+
+
+export type TickTickFilter = {
+	id: string;
+	name: string;
+	rule: string; // this is a stringified JSON object
+	sortOrder: number;
+	sortType: string;
+	viewMode: string | null;
+	timeline: {
+		range: string | null;
+		sortType: string;
+		sortOption: {
+			groupBy: string;
+			orderBy: string;
+		};
+	};
+	etag: string;
+	createdTime: string; // ISO date string
+	modifiedTime: string; // ISO date string
+	sortOption: {
+		groupBy: string;
+		orderBy: string;
+	};
+};
+
 
 export type TickTickTask = {
 	id: string;
@@ -128,4 +155,21 @@ export type HandleTasksBody = {
 export type TaskOperationResponse = {
 	id2etag: Record<string, string>;
 	id2error: Record<string, string>;
+};
+
+export type TickTickFilterRule = {
+	type: number;
+	and: Condition[];
+	version: number;
+};
+
+export type Condition = {
+	conditionType: number;
+	not: (string | OrCondition)[];
+	conditionName: string;
+};
+
+export type OrCondition = {
+	or: string[];
+	conditionName: string;
 };

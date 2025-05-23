@@ -11,8 +11,10 @@ import {
 	TickTickProject,
 	TickTickTask,
 	DeleteTaskParams,
+	TickTickFilterRule,
+	Condition,
 } from '../types/ticktick.types.js';
-import { Project } from '../types/project.types.js';
+import { List } from '../types/list.types.js';
 import { Task } from '../types/tasks.types.js';
 
 function getFilePath(filename: string): string {
@@ -229,11 +231,87 @@ export class TickTickClient {
 		return response.data;
 	}
 
-	async getProjects(): Promise<Project[]> {
+	async getLists(): Promise<List[]> {
 		const projects = await this.fetchProjects();
-		return projects.map(project => ({
-			id: project.id,
-			name: project.name,
-		}));
+		const filters = await this.getFilters();
+
+		return [
+			...projects.map(p => ({
+				id: p.id,
+				name: p.name,
+				isFilter: false,
+			})),
+			...filters.map(f => ({
+				id: f.id,
+				name: f.name,
+				isFilter: true,
+			})),
+		];
 	}
+
+	async getFilters(): Promise<List[]> {
+		const filters = this.mainData!.filters.map(filter => ({
+			id: filter.id,
+			name: filter.name,
+			isFilter: true,
+		}));
+
+		return filters;
+	}
+
+	private parseFilterRule(rule: string): TickTickFilterRule | null {
+		try {
+			return JSON.parse(rule);
+		} catch (error) {
+			console.error('Error parsing filter rule:', error);
+		}
+
+		return null;
+	}
+
+	private conditionMappers: Record<string, (task: TickTickTask, condition: Condition) => boolean> = {
+		dueDate: (task, condition) => {
+			const hasDueDate = !!task.dueDate;
+			return condition.not.includes('nodue') ? hasDueDate : !hasDueDate;
+		},
+
+		listOrGroup: (task, condition) => {
+			for (const notCond of condition.not) {
+				if (typeof notCond === 'object' && 'or' in notCond) {
+					if (notCond.conditionName === 'list') {
+						// If task's projectId is in the excluded list
+						if (notCond.or.includes(task.projectId)) return false;
+					}
+				}
+			}
+			return true;
+		},
+	};
+
+	// Main filter method
+	getTasksByFilter(filterId: string): Task[] {
+		const tasks = this.mainData!.syncTaskBean.update
+		const filter = this.mainData!.filters.find(f => f.id === filterId);
+
+		if (!filter) {
+			console.error('Filter not found');
+			return tasks;
+		}
+
+		const rule = this.parseFilterRule(filter?.rule);
+
+		if (!rule) {
+			console.error('Invalid filter rule');
+			return tasks;
+		}
+
+		return tasks.filter(task => {
+			return rule.and.every(condition => {
+				const mapper = this.conditionMappers[condition.conditionName];
+				if (!mapper) return true; // If unknown condition, ignore it
+				return mapper(task, condition);
+			});
+		}).map(this.mapTickTickTaskToTask);
+	};
+
 }

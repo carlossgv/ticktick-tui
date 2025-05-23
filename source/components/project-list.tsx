@@ -1,9 +1,9 @@
 import React from 'react';
-import {Box, Text} from 'ink';
-import {Project} from '../types/project.types.js';
-import {Spinner} from '@inkjs/ui';
+import { Box, Text } from 'ink';
+import { List } from '../types/list.types.js';
+import { Spinner } from '@inkjs/ui';
 
-type ProjectWithAmount = Project & {
+type ProjectWithAmount = List & {
 	amount: number;
 };
 
@@ -13,7 +13,7 @@ type ProjectListProps = {
 	onSelect: (index: number) => void;
 };
 
-const ProjectList = ({projects, selectedIndex}: ProjectListProps) => {
+const ProjectList = ({ projects, selectedIndex }: ProjectListProps) => {
 	return (
 		<Box flexDirection="column" padding={1}>
 			{projects.length === 0 && <Spinner label="Loading" />}
