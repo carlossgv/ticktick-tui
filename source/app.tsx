@@ -9,22 +9,23 @@ import {convertStringToTaskBody} from './utils/text-parser.js';
 import {DeleteTaskParams} from './types/ticktick.types.js';
 import NewTaskInput from './components/new-task-input.js';
 
-const App = () => {
+type AppProps = {
+	client: TickTickClient;
+};
+
+const App = ({client}: AppProps) => {
 	const [tasks, setTasks] = useState<Task[]>([]);
 	const [projects, setProjects] = useState<List[]>([]);
 	const [selectedTaskIndex, setSelectedTaskIndex] = useState<number>(0);
 	const [selectedProjectIndex, setSelectedProjectIndex] = useState<number>(0);
 	const [selectedColumn, setSelectedColumn] = useState<number>(1); // 0 = left, 1 = center, 2 = right
-	const [client, setClient] = useState<TickTickClient | null>(null);
 	const [isAdding, setIsAdding] = useState(false);
 	const [newTaskInput, setNewTaskInput] = useState('');
 	const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 
 	useEffect(() => {
 		const fetchData = async () => {
-			const client = new TickTickClient();
 			await client.init();
-			setClient(client);
 			const fetchedProjects = await client.getLists();
 			setProjects([
 				{
@@ -132,11 +133,11 @@ const App = () => {
 	const handleAddNewTask = async (text: string) => {
 		const taskBody = convertStringToTaskBody(text);
 		taskBody.projectId = projects[selectedProjectIndex]?.id;
-		await client?.addTasks([taskBody]);
-		await client?.refreshMainData();
+		await client.addTasks([taskBody]);
+		await client.refreshMainData();
 		const project = projects[selectedProjectIndex];
 		if (!project) return;
-		setTasks(client?.getTasksByProjectId(project.id) || []);
+		setTasks(client.getTasksByProjectId(project.id) || []);
 		setSelectedTaskIndex(0);
 		setSelectedProjectIndex(projects.indexOf(project));
 		setSelectedColumn(1);
@@ -148,11 +149,11 @@ const App = () => {
 			projectId: projects[selectedProjectIndex]?.id || '',
 		};
 
-		await client?.deleteTasks([deleteTaskBody]);
-		await client?.refreshMainData();
+		await client.deleteTasks([deleteTaskBody]);
+		await client.refreshMainData();
 		const project = projects[selectedProjectIndex];
 		if (!project) return;
-		setTasks(client?.getTasksByProjectId(project.id) || []);
+		setTasks(client.getTasksByProjectId(project.id) || []);
 		setSelectedTaskIndex(0);
 		setSelectedProjectIndex(projects.indexOf(project));
 		setSelectedColumn(1);
@@ -169,7 +170,7 @@ const App = () => {
 				>
 					<ProjectList
 						projects={projects.map(p => {
-							const amount = client?.getTasksByProjectId(p.id).length || 0;
+							const amount = client.getTasksByProjectId(p.id).length || 0;
 							return {...p, amount};
 						})}
 						selectedIndex={selectedProjectIndex}

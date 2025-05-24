@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 import React from 'react';
 import meow from 'meow';
-import {render} from 'ink';
+import { render } from 'ink';
 import App from './app.js';
-import {convertStringToTaskBody} from './utils/text-parser.js';
-import {TickTickClient} from './clients/ticktick.client.js';
+import { convertStringToTaskBody } from './utils/text-parser.js';
+import { TickTickClient } from './clients/ticktick.client.js';
 import prompts from 'prompts';
 
 const quickAddTask = async (text: string) => {
@@ -26,13 +26,16 @@ const cli = meow(
 	Usage
 	  $ ticktick-tui ["task to add"]
 	  $ ticktick-tui --login
+	  $ ticktick-tui --logout
 
 	Options
-	  --login, -l   Log into your TickTick account via email/password
+	  --login, -l     Log into your TickTick account via email/password
+	  --logout        Log out and remove session cookies
 
 	Examples
 	  $ ticktick-tui "Buy milk #groceries"
 	  $ ticktick-tui --login
+	  $ ticktick-tui --logout
 `,
 	{
 		importMeta: import.meta,
@@ -41,11 +44,28 @@ const cli = meow(
 				type: 'boolean',
 				alias: 'l',
 			},
+			logout: {
+				type: 'boolean',
+			},
+			help: {
+				type: 'boolean',
+				alias: 'h',
+			},
 		},
 	},
 );
 
-if (cli.flags.login) {
+if (cli.flags.logout) {
+	const client = new TickTickClient();
+	try {
+		await client.logout();
+		console.log('Logged out successfully.');
+		process.exit(0);
+	} catch (err) {
+		console.error('Failed to log out:', err);
+		process.exit(1);
+	}
+} else if (cli.flags.login) {
 	const runLoginFlow = async () => {
 		const response = await prompts([
 			{
@@ -64,7 +84,7 @@ if (cli.flags.login) {
 		try {
 			await client.login(response.email, response.password);
 			console.log('Login successful. Starting app...');
-			render(<App />);
+			render(<App client={client} />);
 		} catch (err) {
 			console.error('Login failed:', err);
 			process.exit(1);
@@ -76,5 +96,13 @@ if (cli.flags.login) {
 	const quickAddText = cli.input.join(' ');
 	await quickAddTask(quickAddText);
 } else {
-	render(<App />);
+	const client = new TickTickClient();
+	const cookies = await client.getSessionCookies();
+
+	if (!cookies || cookies.length === 0) {
+		console.error('You are not logged in. Please run with --login to log in.');
+		process.exit(1);
+	}
+
+	render(<App client={client} />);
 }

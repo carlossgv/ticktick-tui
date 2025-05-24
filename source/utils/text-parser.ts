@@ -1,9 +1,10 @@
-import {TaskBody} from '../types/ticktick.types.js';
+import { TaskBody } from '../types/ticktick.types.js';
 import * as chrono from 'chrono-node';
 const DEFAULT_TIMEZONE = 'America/Santiago';
+import { DateTime } from "luxon";
 
 export const convertStringToTaskBody = (str: string): TaskBody => {
-	const {startDate, dueDate, timeZone, dateTexts} = extractDatesFromText(str);
+	const { startDate, dueDate, timeZone, dateTexts } = extractDatesFromText(str);
 
 	const words = str.trim().split(/\s+/);
 	const tags: string[] = [];
@@ -29,6 +30,7 @@ export const convertStringToTaskBody = (str: string): TaskBody => {
 		startDate,
 		dueDate,
 		timeZone,
+		isAllDay: startDate ? false : true
 	};
 };
 
@@ -40,31 +42,36 @@ export type ParsedDates = {
 };
 
 export const extractDatesFromText = (text: string): ParsedDates => {
-	const results = chrono.parse(text, new Date(), {forwardDate: true});
+	const results = chrono.parse(text, new Date(), { forwardDate: true });
 
 	let startDate: string | undefined;
 	let dueDate: string | undefined;
 	const dateTexts: string[] = [];
 
+	const formatToTickTick = (date: Date): string => {
+		return DateTime.fromJSDate(date, { zone: DEFAULT_TIMEZONE })
+			.toUTC()
+			.toFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZZ")
+			.replace(/(\+|-)\d\d:\d\d$/, '+0000'); // Ensure +0000 format
+	};
+
 	if (results.length > 0) {
 		const first = results[0];
 		if (first?.start) {
-			startDate = first.start.date().toISOString();
+			startDate = formatToTickTick(first.start.date());
 			dateTexts.push(first.text);
 		}
 
 		if (first?.end) {
-			dueDate = first.end.date().toISOString();
+			dueDate = formatToTickTick(first.end.date());
 		} else if (results.length > 1) {
 			const second = results[1];
 			if (second?.start) {
-				dueDate = second.start.date().toISOString();
+				dueDate = formatToTickTick(second.start.date());
 				dateTexts.push(second.text);
 			}
 		}
 	}
 
-	const timeZone = startDate ? DEFAULT_TIMEZONE : undefined;
-
-	return {startDate, dueDate, timeZone, dateTexts};
+	return { startDate, dueDate, timeZone: DEFAULT_TIMEZONE, dateTexts };
 };

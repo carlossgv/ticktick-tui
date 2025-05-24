@@ -138,6 +138,7 @@ export type TaskBody = {
 	startDate?: string;
 	dueDate?: string;
 	timeZone?: string;
+	isAllDay?: boolean
 };
 
 export enum Action {
