@@ -254,15 +254,15 @@ export class TickTickClient {
 		const filters = await this.getFilters();
 
 		return [
-			...projects.map(p => ({
-				id: p.id,
-				name: p.name,
-				isFilter: false,
-			})),
 			...filters.map(f => ({
 				id: f.id,
 				name: f.name,
 				isFilter: true,
+			})),
+			...projects.map(p => ({
+				id: p.id,
+				name: p.name,
+				isFilter: false,
 			})),
 		];
 	}
