@@ -2,7 +2,7 @@ import React from 'react';
 import { Box, Text } from 'ink';
 import { Task } from '../types/tasks.types.js';
 import { Spinner } from '@inkjs/ui';
-import { convertUTCToLocalDate } from '../utils/dates.js';
+import { DateTime } from 'luxon';
 
 type TaskListProps = {
 	tasks: Task[];
@@ -11,48 +11,37 @@ type TaskListProps = {
 };
 
 const TaskList = ({ tasks, selectedIndex }: TaskListProps) => {
-	function parseDate(task: Task): string {
-		if (!task.startDate) {
-			return '';
-		}
 
-		const timeZone = task.timeZone || 'America/Santiago';
-		const localDate = convertUTCToLocalDate(task.startDate, timeZone);
+function parseDate(task: Task): string {
+	if (!task.startDate) {
+		return '';
+	}
 
-		const now = new Date();
-		const nowLocal = convertUTCToLocalDate(now.toISOString(), timeZone);
+	const timeZone = task.timeZone || 'America/Santiago';
 
-		const isToday =
-			localDate.getFullYear() === nowLocal.getFullYear() &&
-			localDate.getMonth() === nowLocal.getMonth() &&
-			localDate.getDate() === nowLocal.getDate();
+	const localDate = DateTime.fromISO(task.startDate, { zone: 'utc' }).setZone(timeZone);
+	const nowLocal = DateTime.now().setZone(timeZone);
 
-		if (task.isAllDay) {
-			return isToday
+	const isToday =
+		localDate.hasSame(nowLocal, 'day') &&
+		localDate.hasSame(nowLocal, 'month') &&
+		localDate.hasSame(nowLocal, 'year');
+
+	if (task.isAllDay) {
+		return isToday
+			? ''
+			: localDate.toFormat('MMM d'); // → e.g., "May 24"
+	} else {
+		if (isToday) {
+			const isMidnight = localDate.hour === 0 && localDate.minute === 0;
+			return isMidnight
 				? ''
-				: localDate.toLocaleDateString('en-US', {
-					month: 'short',
-					day: 'numeric',
-				});
+				: localDate.toFormat('HH:mm'); // → e.g., "14:30"
 		} else {
-			const hours = localDate.getHours();
-			const minutes = localDate.getMinutes();
-			if (isToday) {
-				return hours === 0 && minutes === 0
-					? ''
-					: localDate.toLocaleTimeString('en-US', {
-						hour: '2-digit',
-						minute: '2-digit',
-						hour12: false,
-					});
-			} else {
-				return localDate.toLocaleDateString('en-US', {
-					month: 'short',
-					day: 'numeric',
-				});
-			}
+			return localDate.toFormat('MMM d'); // → e.g., "May 24"
 		}
 	}
+}
 
 	return (
 		<Box flexDirection="column" justifyContent='space-between' padding={1}>
