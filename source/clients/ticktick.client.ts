@@ -47,9 +47,14 @@ export class TickTickClient {
 		this.inboxId = this.setInboxId();
 	}
 
-	private async getSessionCookies(): Promise<string[]> {
-		const data = await fs.readFile(this.cookieFile, 'utf-8');
-		return data.split(';').map(s => s.trim());
+	async getSessionCookies(): Promise<string[]> {
+		try {
+			const data = await fs.readFile(this.cookieFile, 'utf-8');
+			return data.split(';').map(s => s.trim());
+		} catch (err) {
+			console.error('Failed to read session cookies, usually means not logged in.');
+			throw err;
+		}
 	}
 
 	async login(username: string, password: string): Promise<void> {
@@ -71,6 +76,19 @@ export class TickTickClient {
 				);
 				console.error(`Remainder times: ${error.data.remainderTimes}`);
 			} else {
+				throw err;
+			}
+		}
+	}
+
+	async logout(): Promise<void> {
+		try {
+			await fs.unlink(this.cookieFile);
+		} catch (err: any) {
+			if (err.code === 'ENOENT') {
+				console.warn('No session found to log out.');
+			} else {
+				console.error('Failed to log out:', err);
 				throw err;
 			}
 		}
