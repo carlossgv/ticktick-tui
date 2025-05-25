@@ -313,14 +313,18 @@ export class TickTickClient {
 
 		if (!filter) {
 			console.error('Filter not found');
-			return tasks;
+			return []
+		}
+
+		if (!filter.rule) {
+			return tasks.map(this.mapTickTickTaskToTask);
 		}
 
 		const rule = this.parseFilterRule(filter?.rule);
 
 		if (!rule) {
 			console.error('Invalid filter rule');
-			return tasks;
+			return tasks.map(this.mapTickTickTaskToTask);
 		}
 
 		return tasks.filter(task => {
