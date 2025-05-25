@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {Box, Newline, Text, useInput} from 'ink';
+import {Box, Newline, Text, useInput, useStdout} from 'ink';
 import TaskList from './components/task-list.js';
 import {TickTickClient} from './clients/ticktick.client.js';
 import {Task} from './types/tasks.types.js';
@@ -11,7 +11,7 @@ import NewTaskInput from './components/new-task-input.js';
 
 type AppProps = {
 	client: TickTickClient;
-};
+}
 
 const App = ({client}: AppProps) => {
 	const [tasks, setTasks] = useState<Task[]>([]);
@@ -22,6 +22,19 @@ const App = ({client}: AppProps) => {
 	const [isAdding, setIsAdding] = useState(false);
 	const [newTaskInput, setNewTaskInput] = useState('');
 	const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+	const {stdout} = useStdout();
+	const [terminalHeight, setTerminalHeight] = useState(stdout?.rows || 24);
+
+	useEffect(() => {
+		if (!stdout) return;
+
+		const onResize = () => setTerminalHeight(stdout.rows);
+		stdout.on('resize', onResize);
+
+		return () => {
+			stdout.off('resize', onResize);
+		};
+	}, [stdout]);
 
 	useEffect(() => {
 		const fetchData = async () => {
@@ -160,8 +173,8 @@ const App = ({client}: AppProps) => {
 	};
 
 	return (
-		<Box flexDirection="column" width="100%">
-			<Box flexDirection="row" width="100%">
+		<Box flexDirection="column" width="100%" height="100%" flexGrow={1}>
+			<Box flexDirection="row" width="100%" height="100%" flexGrow={1}>
 				<Box
 					width="25%"
 					flexDirection="column"
@@ -189,6 +202,7 @@ const App = ({client}: AppProps) => {
 						tasks={tasks}
 						selectedIndex={selectedTaskIndex}
 						onSelect={setSelectedTaskIndex}
+						terminalHeight={terminalHeight}
 					/>
 					{showDeleteConfirmation && (
 						<Box

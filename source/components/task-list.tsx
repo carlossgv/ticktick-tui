@@ -1,25 +1,23 @@
-import React, { useMemo } from 'react';
-import { Box, Text } from 'ink';
-import { Task } from '../types/tasks.types.js';
+import React, { useMemo, useRef, useEffect, useState } from 'react';
+import { Box, Text, measureElement } from 'ink';
 import { Spinner } from '@inkjs/ui';
 import { DateTime } from 'luxon';
+import { Task } from '../types/tasks.types.js';
 
 type TaskListProps = {
 	tasks: Task[];
 	selectedIndex: number;
 	onSelect: (index: number) => void;
+	terminalHeight: number; // new prop
 };
 
-const VISIBLE_COUNT = 10;
+const TaskList = ({ tasks, selectedIndex, terminalHeight }: TaskListProps) => {
+	const visibleCount = Math.max(terminalHeight - 6, 1); // 2 for scroll indicators, 2 for padding
 
-const TaskList = ({ tasks, selectedIndex }: TaskListProps) => {
 	function parseDate(task: Task): string {
-		if (!task.startDate) {
-			return '';
-		}
+		if (!task.startDate) return '';
 
 		const timeZone = task.timeZone || 'America/Santiago';
-
 		const localDate = DateTime.fromISO(task.startDate, { zone: 'utc' }).setZone(timeZone);
 		const nowLocal = DateTime.now().setZone(timeZone);
 
@@ -28,31 +26,21 @@ const TaskList = ({ tasks, selectedIndex }: TaskListProps) => {
 			localDate.hasSame(nowLocal, 'month') &&
 			localDate.hasSame(nowLocal, 'year');
 
-		if (task.isAllDay) {
-			return isToday
-				? ''
-				: localDate.toFormat('MMM d');
-		} else {
-			if (isToday) {
-				const isMidnight = localDate.hour === 0 && localDate.minute === 0;
-				return isMidnight
-					? ''
-					: localDate.toFormat('HH:mm');
-			} else {
-				return localDate.toFormat('MMM d');
-			}
-		}
+		if (task.isAllDay) return isToday ? '' : localDate.toFormat('MMM d');
+
+		const isMidnight = localDate.hour === 0 && localDate.minute === 0;
+		return isToday ? (isMidnight ? '' : localDate.toFormat('HH:mm')) : localDate.toFormat('MMM d');
 	}
 
 	const scrollOffset = useMemo(() => {
-		if (selectedIndex < VISIBLE_COUNT) return 0;
-		return selectedIndex - VISIBLE_COUNT + 1;
-	}, [selectedIndex]);
+		if (selectedIndex < visibleCount) return 0;
+		return selectedIndex - visibleCount + 1;
+	}, [selectedIndex, visibleCount]);
 
-	const visibleTasks = tasks.slice(scrollOffset, scrollOffset + VISIBLE_COUNT);
+	const visibleTasks = tasks.slice(scrollOffset, scrollOffset + visibleCount);
 
 	return (
-		<Box flexDirection="column" justifyContent="space-between" padding={1}>
+		<Box flexDirection="column" padding={1}>
 			{tasks.length === 0 && <Spinner label="Loading" />}
 
 			{scrollOffset > 0 && <Text color="gray">↑ More</Text>}
@@ -76,7 +64,7 @@ const TaskList = ({ tasks, selectedIndex }: TaskListProps) => {
 				);
 			})}
 
-			{scrollOffset + VISIBLE_COUNT < tasks.length && <Text color="gray">↓ More</Text>}
+			{scrollOffset + visibleCount < tasks.length && <Text color="gray">↓ More</Text>}
 		</Box>
 	);
 };
