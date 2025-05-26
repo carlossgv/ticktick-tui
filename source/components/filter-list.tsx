@@ -1,6 +1,6 @@
 import React from 'react';
-import { Box, Text } from 'ink';
-import { Spinner } from '@inkjs/ui';
+import {Box, Text} from 'ink';
+import {Spinner} from '@inkjs/ui';
 
 type Filter = {
 	id: string;
@@ -14,7 +14,7 @@ type FiltersListProps = {
 	onSelect: (index: number) => void;
 };
 
-const FiltersList = ({ filters, selectedIndex, onSelect }: FiltersListProps) => {
+const FiltersList = ({filters, selectedIndex, onSelect}: FiltersListProps) => {
 	return (
 		<Box flexDirection="column" padding={1}>
 			{filters.length === 0 && <Spinner label="Loading" />}

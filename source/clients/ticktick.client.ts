@@ -1,4 +1,4 @@
-import axios, { AxiosInstance } from 'axios';
+import axios, {AxiosInstance} from 'axios';
 import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
@@ -14,8 +14,8 @@ import {
 	TickTickFilterRule,
 	Condition,
 } from '../types/ticktick.types.js';
-import { List } from '../types/list.types.js';
-import { Task } from '../types/tasks.types.js';
+import {List} from '../types/list.types.js';
+import {Task} from '../types/tasks.types.js';
 
 function getFilePath(filename: string): string {
 	const home = os.homedir();
@@ -54,14 +54,16 @@ export class TickTickClient {
 			const data = await fs.readFile(this.cookieFile, 'utf-8');
 			return data.split(';').map(s => s.trim());
 		} catch (err) {
-			console.error('Failed to read session cookies, usually means not logged in.');
+			console.error(
+				'Failed to read session cookies, usually means not logged in.',
+			);
 			throw err;
 		}
 	}
 
 	async login(username: string, password: string): Promise<void> {
 		try {
-			const body = { username, password };
+			const body = {username, password};
 			const response = await this.axiosInstance.post(
 				`${this.ticktickUrl}/user/signon?wc=true&remember=true`,
 				body,
@@ -287,7 +289,10 @@ export class TickTickClient {
 		return null;
 	}
 
-	private conditionMappers: Record<string, (task: TickTickTask, condition: Condition) => boolean> = {
+	private conditionMappers: Record<
+		string,
+		(task: TickTickTask, condition: Condition) => boolean
+	> = {
 		dueDate: (task, condition) => {
 			const hasDueDate = !!task.dueDate;
 			return condition.not.includes('nodue') ? hasDueDate : !hasDueDate;
@@ -308,12 +313,12 @@ export class TickTickClient {
 
 	// Main filter method
 	getTasksByFilter(filterId: string): Task[] {
-		const tasks = this.mainData!.syncTaskBean.update
+		const tasks = this.mainData!.syncTaskBean.update;
 		const filter = this.mainData!.filters.find(f => f.id === filterId);
 
 		if (!filter) {
 			console.error('Filter not found');
-			return []
+			return [];
 		}
 
 		if (!filter.rule) {
@@ -327,13 +332,14 @@ export class TickTickClient {
 			return tasks.map(this.mapTickTickTaskToTask);
 		}
 
-		return tasks.filter(task => {
-			return rule.and.every(condition => {
-				const mapper = this.conditionMappers[condition.conditionName];
-				if (!mapper) return true; // If unknown condition, ignore it
-				return mapper(task, condition);
-			});
-		}).map(this.mapTickTickTaskToTask);
-	};
-
+		return tasks
+			.filter(task => {
+				return rule.and.every(condition => {
+					const mapper = this.conditionMappers[condition.conditionName];
+					if (!mapper) return true; // If unknown condition, ignore it
+					return mapper(task, condition);
+				});
+			})
+			.map(this.mapTickTickTaskToTask);
+	}
 }

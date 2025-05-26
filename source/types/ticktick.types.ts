@@ -6,7 +6,6 @@ export type TickTickMainResponse = {
 	filters: TickTickFilter[];
 };
 
-
 export type TickTickFilter = {
 	id: string;
 	name: string;
@@ -30,7 +29,6 @@ export type TickTickFilter = {
 		orderBy: string;
 	};
 };
-
 
 export type TickTickTask = {
 	id: string;
@@ -138,7 +136,7 @@ export type TaskBody = {
 	startDate?: string;
 	dueDate?: string;
 	timeZone?: string;
-	isAllDay?: boolean
+	isAllDay?: boolean;
 };
 
 export enum Action {
