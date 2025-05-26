@@ -6,22 +6,22 @@ A terminal-based interface (TUI) for TickTick, designed to be a fast, keyboard-f
 
 ## Features
 
-* ✅ Load tasks and project lists (regular lists fully supported)
-* ✅ View task details
-* ✅ Add new tasks
-* ✅ Delete tasks
-* ✅ Add quick task via CLI without launching the TUI
-* 🚧 Partial support for smart lists
-* 🎯 Full keyboard navigation (vim-style: `hjkl` or arrow keys)
+- ✅ Load tasks and project lists (regular lists fully supported)
+- ✅ View task details
+- ✅ Add new tasks
+- ✅ Delete tasks
+- ✅ Add quick task via CLI without launching the TUI
+- 🚧 Partial support for smart lists
+- 🎯 Full keyboard navigation (vim-style: `hjkl` or arrow keys)
 
 ## Roadmap
 
-* [ ] Edit tasks from the details pane
-* [ ] List tasks by tag
-* [ ] Filter/search tasks
-* [ ] Change sort order
-* [ ] Mark tasks as done
-* [ ] Full support for smart lists
+- [ ] Edit tasks from the details pane
+- [ ] List tasks by tag
+- [ ] Filter/search tasks
+- [ ] Change sort order
+- [ ] Mark tasks as done
+- [ ] Full support for smart lists
 
 ## Installation
 
@@ -65,6 +65,7 @@ Add a task directly without opening the TUI:
 ```bash
 ticktick-tui "Finish writing blog post #writing"
 ```
+
 ## Disclaimer
 
 This is an unofficial project and not affiliated with TickTick. Use at your own discretion.

@@ -16,7 +16,7 @@ const NewTaskInput = ({text}: Props) => {
 	}, []);
 
 	return (
-		<Box marginBottom={1} borderStyle="single" borderColor="green">
+		<Box borderStyle="single" borderColor="green" marginBottom={1} paddingX={1}>
 			<Text color="cyan">➤ </Text>
 			<Text color="white">
 				{text}
