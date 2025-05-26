@@ -11,10 +11,41 @@ import NewTaskInput from './components/new-task-input.js';
 
 type AppProps = {
 	client: TickTickClient;
-}
+};
+
+type SortType = 'default' | 'date' | 'title';
+
+const sortTypes: SortType[] = ['default', 'date', 'title'];
+
+const getSortedTasks = (
+	tasks: Task[],
+	sortType: SortType,
+	reversed: boolean,
+): Task[] => {
+	const sorted = [...tasks];
+	switch (sortType) {
+		case 'date':
+			sorted.sort((a, b) => {
+				const ad = new Date(a.startDate || 0).getTime();
+				const bd = new Date(b.startDate || 0).getTime();
+				return ad - bd;
+			});
+			break;
+		case 'title':
+			sorted.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+			break;
+		case 'default':
+		default:
+			// No extra sorting, keep original order
+			break;
+	}
+	if (reversed) sorted.reverse();
+	return sorted;
+};
 
 const App = ({client}: AppProps) => {
 	const [tasks, setTasks] = useState<Task[]>([]);
+	const [sortedTasks, setSortedTasks] = useState<Task[]>([]);
 	const [projects, setProjects] = useState<List[]>([]);
 	const [selectedTaskIndex, setSelectedTaskIndex] = useState<number>(0);
 	const [selectedProjectIndex, setSelectedProjectIndex] = useState<number>(0);
@@ -24,6 +55,9 @@ const App = ({client}: AppProps) => {
 	const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 	const {stdout} = useStdout();
 	const [terminalHeight, setTerminalHeight] = useState(stdout?.rows || 24);
+
+	const [sortType, setSortType] = useState<SortType>('default');
+	const [sortReversed, setSortReversed] = useState<boolean>(false);
 
 	useEffect(() => {
 		if (!stdout) return;
@@ -63,6 +97,12 @@ const App = ({client}: AppProps) => {
 		}
 	}, [selectedProjectIndex]);
 
+	useEffect(() => {
+		setSortedTasks(getSortedTasks(tasks, sortType, sortReversed));
+		// Reset selection if tasks count changes
+		setSelectedTaskIndex(i => Math.min(i, tasks.length - 1));
+	}, [tasks, sortType, sortReversed]);
+
 	const handleProjectSelect = (id: string) => {
 		const selectedProject = projects.find(project => project.id === id);
 		if (selectedProject) {
@@ -76,7 +116,7 @@ const App = ({client}: AppProps) => {
 		}
 	};
 
-	const selectedTask = tasks[selectedTaskIndex];
+	const selectedTask = sortedTasks[selectedTaskIndex];
 
 	useInput((input, key) => {
 		if (isAdding) {
@@ -122,6 +162,24 @@ const App = ({client}: AppProps) => {
 			return;
 		}
 
+		// Sorting keybindings
+		if (!isAdding && selectedColumn === 1) {
+			if (input === 's') {
+				setSortType(curr => {
+					const idx = sortTypes.indexOf(curr);
+					if (idx === -1) return 'default';
+					const nextType = sortTypes[(idx + 1) % sortTypes.length];
+					return nextType ? nextType : 'default';
+				});
+				setSelectedTaskIndex(0); // reset selection
+				return;
+			}
+			if (input === 'r') {
+				setSortReversed(r => !r);
+				return;
+			}
+		}
+
 		if (key.leftArrow || input === 'h') {
 			setSelectedColumn(col => (col > 0 ? col - 1 : col));
 		} else if (key.rightArrow || input === 'l') {
@@ -136,9 +194,9 @@ const App = ({client}: AppProps) => {
 			}
 		} else if (selectedColumn === 1) {
 			if (key.upArrow || input === 'k') {
-				setSelectedTaskIndex(i => (i > 0 ? i - 1 : tasks.length - 1));
+				setSelectedTaskIndex(i => (i > 0 ? i - 1 : sortedTasks.length - 1));
 			} else if (key.downArrow || input === 'j') {
-				setSelectedTaskIndex(i => (i < tasks.length - 1 ? i + 1 : 0));
+				setSelectedTaskIndex(i => (i < sortedTasks.length - 1 ? i + 1 : 0));
 			}
 		}
 	});
@@ -196,10 +254,19 @@ const App = ({client}: AppProps) => {
 					flexDirection="column"
 					borderStyle="single"
 					borderColor={selectedColumn === 1 ? 'green' : 'gray'}
+					padding={1}
 				>
+					<Box
+						flexDirection="row"
+						justifyContent="space-between"
+						marginBottom={1}
+					>
+						<Text color="green">{projects[selectedProjectIndex]?.name}</Text>
+						<Text color="gray">{` (sorted by: ${sortType} ${sortReversed ? '↑' : '↓'})`}</Text>
+					</Box>
 					{isAdding && <NewTaskInput text={newTaskInput} />}
 					<TaskList
-						tasks={tasks}
+						tasks={sortedTasks}
 						selectedIndex={selectedTaskIndex}
 						onSelect={setSelectedTaskIndex}
 						terminalHeight={terminalHeight}
@@ -243,8 +310,12 @@ const App = ({client}: AppProps) => {
 				paddingY={0}
 				borderStyle="single"
 				borderColor="gray"
+				flexDirection="column"
 			>
-				<Text>arrows / hjkl: move | (n)ew task | (d)elete task </Text>
+				<Text>
+					arrows / hjkl: move | (n)ew task | (d)elete task | (s)ort: {sortType}{' '}
+					| (r)everse sort
+				</Text>
 			</Box>
 		</Box>
 	);

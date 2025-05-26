@@ -40,7 +40,7 @@ const TaskList = ({ tasks, selectedIndex, terminalHeight }: TaskListProps) => {
 	const visibleTasks = tasks.slice(scrollOffset, scrollOffset + visibleCount);
 
 	return (
-		<Box flexDirection="column" padding={1}>
+		<Box flexDirection="column">
 			{tasks.length === 0 && <Spinner label="Loading" />}
 
 			{scrollOffset > 0 && <Text color="gray">↑ More</Text>}
@@ -48,19 +48,27 @@ const TaskList = ({ tasks, selectedIndex, terminalHeight }: TaskListProps) => {
 			{visibleTasks.map((task, index) => {
 				const actualIndex = scrollOffset + index;
 				const isSelected = actualIndex === selectedIndex;
+				const isOverdue = task.startDate && DateTime.fromISO(task.startDate).setZone(task.timeZone || 'America/Santiago') < DateTime.now().setZone(task.timeZone || 'America/Santiago');
 
 				return (
-					<Text
+					<Box
 						key={task.id}
-						color={isSelected ? 'black' : undefined}
-						backgroundColor={isSelected ? 'cyan' : undefined}
+						flexDirection="row"
+						justifyContent="space-between"
 					>
-						{task.title}
-						<Text color="yellow">
-							{task.tags?.length ? ` #${task.tags.join(' #')}` : ''}
+						<Text
+							color={isSelected ? 'black' : isOverdue ? 'red' : 'white'}
+							backgroundColor={isSelected ? 'cyan' : undefined}
+						>
+							{task.title}
 						</Text>
-						<Text>{task.startDate ? ` (${parseDate(task)})` : ''}</Text>
-					</Text>
+						<Box flexDirection="row" >
+							<Text color="yellow" >
+								{task.tags?.length ? ` #${task.tags.join(' #')}` : ''}
+							</Text>
+							<Text >{parseDate(task) ? ` (${parseDate(task)})` : ''}</Text>
+						</Box>
+					</Box>
 				);
 			})}
 

@@ -1,11 +1,11 @@
-import React, {useEffect, useState} from 'react';
-import {Box, Text} from 'ink';
+import React, { useEffect, useState } from 'react';
+import { Box, Text } from 'ink';
 
 type Props = {
 	text: string;
 };
 
-const NewTaskInput = ({text}: Props) => {
+const NewTaskInput = ({ text }: Props) => {
 	const [showCursor, setShowCursor] = useState(true);
 
 	useEffect(() => {
@@ -16,7 +16,7 @@ const NewTaskInput = ({text}: Props) => {
 	}, []);
 
 	return (
-		<Box marginBottom={1} borderStyle="single" borderColor="green">
+		<Box borderStyle="single" borderColor="green" marginBottom={1} paddingX={1} >
 			<Text color="cyan">➤ </Text>
 			<Text color="white">
 				{text}
