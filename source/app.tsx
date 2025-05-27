@@ -122,9 +122,9 @@ const App = ({client}: AppProps) => {
 	useInput((input, key) => {
 		if (isAdding) {
 			if (key.return) {
-				if (newTaskInput.trim()) {
-					handleAddNewTask(newTaskInput.trim());
-				}
+				// if (newTaskInput.trim()) {
+				// 	handleAddNewTask(newTaskInput.trim());
+				// }
 				setNewTaskInput('');
 				setIsAdding(false);
 				return;
@@ -233,7 +233,9 @@ const App = ({client}: AppProps) => {
 
 	const handleUpdateTask = async (task: Task) => {
 		console.debug('Updating task:', task);
-		await client.updateTasks([{...task, projectId: projects[selectedProjectIndex]?.id || ''}]);
+		await client.updateTasks([
+			{...task, projectId: projects[selectedProjectIndex]?.id || ''},
+		]);
 		await client.refreshMainData();
 		const project = projects[selectedProjectIndex];
 		if (!project) return;
@@ -277,7 +279,7 @@ const App = ({client}: AppProps) => {
 						<Text color="green">{projects[selectedProjectIndex]?.name}</Text>
 						<Text color="gray">{` (sorted by: ${sortType} ${sortReversed ? '↑' : '↓'})`}</Text>
 					</Box>
-					{isAdding && <NewTaskInput text={newTaskInput} />}
+					{isAdding && <NewTaskInput onSubmit={handleAddNewTask} />}
 					<TaskList
 						tasks={sortedTasks}
 						selectedIndex={selectedTaskIndex}
@@ -303,10 +305,10 @@ const App = ({client}: AppProps) => {
 					borderColor={selectedColumn === 2 ? 'green' : 'gray'}
 					padding={1}
 				>
-					<TaskDetails
-						selectedTask={selectedTask}
-						onUpdate={handleUpdateTask}
-					/>
+					{/* <TaskDetails */}
+					{/* 	task={selectedTask} */}
+					{/* 	onUpdate={handleUpdateTask} */}
+					{/* /> */}
 				</Box>
 			</Box>
 			<Box
@@ -327,4 +329,3 @@ const App = ({client}: AppProps) => {
 };
 
 export default App;
-
