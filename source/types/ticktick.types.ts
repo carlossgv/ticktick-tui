@@ -139,6 +139,18 @@ export type TaskBody = {
 	isAllDay?: boolean;
 };
 
+export type UpdateTaskParams = {
+	title: string;
+	id: string;
+	projectId: string;
+	tags?: string[];
+	startDate?: string;
+	dueDate?: string;
+	timeZone?: string;
+	isAllDay?: boolean;
+	modifiedTime?: string; // ISO date string
+};
+
 export enum Action {
 	Add = 'add',
 	Update = 'update',

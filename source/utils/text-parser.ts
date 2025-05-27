@@ -1,6 +1,6 @@
 import {TaskBody} from '../types/ticktick.types.js';
 import * as chrono from 'chrono-node';
-const DEFAULT_TIMEZONE = 'America/Santiago';
+export const DEFAULT_TIMEZONE = 'America/Santiago';
 import {DateTime} from 'luxon';
 
 export const convertStringToTaskBody = (str: string): TaskBody => {

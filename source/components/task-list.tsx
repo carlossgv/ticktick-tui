@@ -1,8 +1,8 @@
-import React, {useMemo, useRef, useEffect, useState} from 'react';
-import {Box, Text, measureElement} from 'ink';
-import {Spinner} from '@inkjs/ui';
-import {DateTime} from 'luxon';
-import {Task} from '../types/tasks.types.js';
+import React, { useMemo } from 'react';
+import { Box, Text } from 'ink';
+import { Spinner } from '@inkjs/ui';
+import { DateTime } from 'luxon';
+import { Task } from '../types/tasks.types.js';
 
 type TaskListProps = {
 	tasks: Task[];
@@ -11,14 +11,14 @@ type TaskListProps = {
 	terminalHeight: number; // new prop
 };
 
-const TaskList = ({tasks, selectedIndex, terminalHeight}: TaskListProps) => {
+const TaskList = ({ tasks, selectedIndex, terminalHeight }: TaskListProps) => {
 	const visibleCount = Math.max(terminalHeight - 6, 1); // 2 for scroll indicators, 2 for padding
 
 	function parseDate(task: Task): string {
 		if (!task.startDate) return '';
 
 		const timeZone = task.timeZone || 'America/Santiago';
-		const localDate = DateTime.fromISO(task.startDate, {zone: 'utc'}).setZone(
+		const localDate = DateTime.fromISO(task.startDate, { zone: 'utc' }).setZone(
 			timeZone,
 		);
 		const nowLocal = DateTime.now().setZone(timeZone);

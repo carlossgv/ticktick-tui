@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {Box, Newline, Text, useInput, useStdout} from 'ink';
+import {Box, Text, useInput, useStdout} from 'ink';
 import TaskList from './components/task-list.js';
 import {TickTickClient} from './clients/ticktick.client.js';
 import {Task} from './types/tasks.types.js';
@@ -8,6 +8,7 @@ import ProjectList from './components/project-list.js';
 import {convertStringToTaskBody} from './utils/text-parser.js';
 import {DeleteTaskParams} from './types/ticktick.types.js';
 import NewTaskInput from './components/new-task-input.js';
+import TaskDetails from './components/task-details.js';
 
 type AppProps = {
 	client: TickTickClient;
@@ -151,7 +152,7 @@ const App = ({client}: AppProps) => {
 			return;
 		}
 
-		if (input === 'n') {
+		if (input === 'n' && selectedColumn === 1) {
 			setIsAdding(true);
 			setNewTaskInput('');
 			return;
@@ -230,6 +231,18 @@ const App = ({client}: AppProps) => {
 		setSelectedColumn(1);
 	};
 
+	const handleUpdateTask = async (task: Task) => {
+		console.debug('Updating task:', task);
+		await client.updateTasks([{...task, projectId: projects[selectedProjectIndex]?.id || ''}]);
+		await client.refreshMainData();
+		const project = projects[selectedProjectIndex];
+		if (!project) return;
+		setTasks(client.getTasksByProjectId(project.id) || []);
+		setSelectedTaskIndex(0);
+		setSelectedProjectIndex(projects.indexOf(project));
+		setSelectedColumn(1);
+	};
+
 	return (
 		<Box flexDirection="column" width="100%" height="100%" flexGrow={1}>
 			<Box flexDirection="row" width="100%" height="100%" flexGrow={1}>
@@ -290,18 +303,10 @@ const App = ({client}: AppProps) => {
 					borderColor={selectedColumn === 2 ? 'green' : 'gray'}
 					padding={1}
 				>
-					{selectedTask ? (
-						<>
-							<Text color="green">{selectedTask.title}</Text>
-							{selectedTask.tags?.length > 0 && (
-								<Text color="yellow">{`#${selectedTask.tags.join('# ')}`}</Text>
-							)}
-							<Newline />
-							<Text color="white">{selectedTask.content}</Text>
-						</>
-					) : (
-						<Text color="gray">No task selected</Text>
-					)}
+					<TaskDetails
+						selectedTask={selectedTask}
+						onUpdate={handleUpdateTask}
+					/>
 				</Box>
 			</Box>
 			<Box
@@ -322,3 +327,4 @@ const App = ({client}: AppProps) => {
 };
 
 export default App;
+

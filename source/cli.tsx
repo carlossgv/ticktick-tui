@@ -6,6 +6,7 @@ import {convertStringToTaskBody} from './utils/text-parser.js';
 import {TickTickClient} from './clients/ticktick.client.js';
 import prompts from 'prompts';
 import {withFullScreen} from 'fullscreen-ink';
+import { render } from 'ink';
 
 const quickAddTask = async (text: string) => {
 	try {
@@ -104,5 +105,6 @@ if (cli.flags.logout) {
 		process.exit(1);
 	}
 
-	withFullScreen(<App client={client} />).start();
+	// withFullScreen(<App client={client} />).start();
+	render(<App client={client} />)
 }

@@ -1,4 +1,4 @@
-import axios, {AxiosInstance} from 'axios';
+import axios, { AxiosInstance } from 'axios';
 import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
@@ -13,9 +13,11 @@ import {
 	DeleteTaskParams,
 	TickTickFilterRule,
 	Condition,
+	UpdateTaskParams,
 } from '../types/ticktick.types.js';
-import {List} from '../types/list.types.js';
-import {Task} from '../types/tasks.types.js';
+import { List } from '../types/list.types.js';
+import { Task } from '../types/tasks.types.js';
+import { ticktickDate } from '../utils/date.js';
 
 function getFilePath(filename: string): string {
 	const home = os.homedir();
@@ -63,7 +65,7 @@ export class TickTickClient {
 
 	async login(username: string, password: string): Promise<void> {
 		try {
-			const body = {username, password};
+			const body = { username, password };
 			const response = await this.axiosInstance.post(
 				`${this.ticktickUrl}/user/signon?wc=true&remember=true`,
 				body,
@@ -238,6 +240,36 @@ export class TickTickClient {
 		}
 	}
 
+	async updateTasks(tasks: UpdateTaskParams[]): Promise<void> {
+		const body: HandleTasksBody = {
+			add: [],
+			update: tasks.map(t => ({ ...t, modifiedTime: ticktickDate(new Date()) })),
+			delete: [],
+		};
+
+		console.debug('Update tasks body:', body);
+
+		const cookies = await this.getSessionCookies();
+
+		const response = await this.axiosInstance.post<TaskOperationResponse>(
+			`${this.ticktickUrl}/batch/task`,
+			body,
+			{
+				headers: {
+					Cookie: cookies.join(';'),
+				},
+			},
+		);
+
+		console.debug('Update tasks response:', response.data);
+
+		if (!response.data || Object.keys(response.data.id2error).length > 0) {
+			console.error(
+				`Error in task operation: ${JSON.stringify(response.data.id2error)}`,
+			);
+		}
+	}
+
 	private async fetchProjects(): Promise<TickTickProject[]> {
 		const cookies = await this.getSessionCookies();
 		const response = await this.axiosInstance.get<TickTickProject[]>(
@@ -293,23 +325,23 @@ export class TickTickClient {
 		string,
 		(task: TickTickTask, condition: Condition) => boolean
 	> = {
-		dueDate: (task, condition) => {
-			const hasDueDate = !!task.dueDate;
-			return condition.not.includes('nodue') ? hasDueDate : !hasDueDate;
-		},
+			dueDate: (task, condition) => {
+				const hasDueDate = !!task.dueDate;
+				return condition.not.includes('nodue') ? hasDueDate : !hasDueDate;
+			},
 
-		listOrGroup: (task, condition) => {
-			for (const notCond of condition.not) {
-				if (typeof notCond === 'object' && 'or' in notCond) {
-					if (notCond.conditionName === 'list') {
-						// If task's projectId is in the excluded list
-						if (notCond.or.includes(task.projectId)) return false;
+			listOrGroup: (task, condition) => {
+				for (const notCond of condition.not) {
+					if (typeof notCond === 'object' && 'or' in notCond) {
+						if (notCond.conditionName === 'list') {
+							// If task's projectId is in the excluded list
+							if (notCond.or.includes(task.projectId)) return false;
+						}
 					}
 				}
-			}
-			return true;
-		},
-	};
+				return true;
+			},
+		};
 
 	// Main filter method
 	getTasksByFilter(filterId: string): Task[] {
