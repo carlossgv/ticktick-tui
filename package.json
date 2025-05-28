@@ -20,6 +20,7 @@
 	"dependencies": {
 		"@inkjs/ui": "^2.0.0",
 		"axios": "^1.9.0",
+		"chrono-node": "2.7.5",
 		"fullscreen-ink": "^0.0.2",
 		"ink": "^5.2.1",
 		"luxon": "^3.6.1",
