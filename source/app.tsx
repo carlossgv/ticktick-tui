@@ -202,8 +202,10 @@ const App = ({client}: AppProps) => {
 	});
 
 	const handleAddNewTask = async (text: string) => {
-		const taskBody = convertStringToTaskBody(text);
-		taskBody.projectId = projects[selectedProjectIndex]?.id;
+		const taskBody = await convertStringToTaskBody(text, client);
+		taskBody.projectId =
+			taskBody.projectId ?? projects[selectedProjectIndex]?.id;
+
 		await client.addTasks([taskBody]);
 		await client.refreshMainData();
 		const project = projects[selectedProjectIndex];

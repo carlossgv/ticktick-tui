@@ -9,9 +9,11 @@ import {withFullScreen} from 'fullscreen-ink';
 
 const quickAddTask = async (text: string) => {
 	try {
-		const taskBody = convertStringToTaskBody(text);
 		const client = new TickTickClient();
 		await client.init();
+
+		const taskBody = await convertStringToTaskBody(text, client);
+
 		await client.addTasks([taskBody]);
 		console.log('Task added successfully');
 		process.exit(0);
