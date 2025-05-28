@@ -2,7 +2,9 @@
 	"name": "ticktick-tui",
 	"version": "0.1.0-alpha.0",
 	"license": "MIT",
-	"bin": "dist/cli.js",
+	"bin": {
+		"ticktick-tui": "dist/cli.js"
+	},
 	"type": "module",
 	"engines": {
 		"node": ">=16"
