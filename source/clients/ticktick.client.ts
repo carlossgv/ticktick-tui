@@ -238,7 +238,7 @@ export class TickTickClient {
 		}
 	}
 
-	private async fetchProjects(): Promise<TickTickProject[]> {
+	async fetchProjects(): Promise<TickTickProject[]> {
 		const cookies = await this.getSessionCookies();
 		const response = await this.axiosInstance.get<TickTickProject[]>(
 			`${this.ticktickUrl}/projects`,
