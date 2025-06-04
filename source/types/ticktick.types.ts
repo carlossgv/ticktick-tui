@@ -30,18 +30,27 @@ export type TickTickFilter = {
 	};
 };
 
+export type TickTickReminder = {
+	id: string;
+	trigger: string;
+};
+
 export type TickTickTask = {
 	id: string;
 	projectId: string;
 	sortOrder: number;
 	title: string;
 	content: string;
-	// desc: string;
 	timeZone: string;
+	reminders: TickTickReminder[];
+	tags: string[];
+	startDate?: string;
+	dueDate?: string;
+	createdTime: string;
+	// desc: string;
 	// isFloating: boolean;
 	// isAllDay: boolean;
 	// reminder: string;
-	// reminders: string[];
 	// repeatFirstDate: string;
 	// repeatFlag: string;
 	// exDate: string[];
@@ -54,12 +63,8 @@ export type TickTickTask = {
 	// modifiedTime: string;
 	// etag: string;
 	// deleted: number;
-	createdTime: string;
 	// creator: number;
 	// repeatFrom: string;
-	tags: string[];
-	startDate?: string;
-	dueDate?: string;
 	// attachments: any[]; // You can refine this too
 	// commentCount: number;
 	// focusSummaries: any[]; // Same here
@@ -133,6 +138,7 @@ export type TaskBody = {
 	id?: string;
 	projectId?: string;
 	tags?: string[];
+	reminders?: TickTickReminder[];
 	startDate?: string;
 	dueDate?: string;
 	timeZone?: string;

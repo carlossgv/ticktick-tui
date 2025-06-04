@@ -1,8 +1,9 @@
-import {TaskBody} from '../types/ticktick.types.js';
+import {TaskBody, TickTickReminder} from '../types/ticktick.types.js';
 import * as chrono from 'chrono-node';
 const DEFAULT_TIMEZONE = 'America/Santiago';
 import {DateTime} from 'luxon';
 import {TickTickClient} from '../clients/ticktick.client.js';
+import {v4 as uuidv4} from 'uuid';
 
 const cleanProjectName = (name: string) =>
 	name
@@ -41,18 +42,15 @@ export const convertStringToTaskBody = async (
 		if (word.startsWith('#') && word.length > 1) {
 			tags.push(word.slice(1));
 		} else if (word.startsWith('~')) {
-			// Match ~projectname (until next space)
 			foundProjectKey = word
 				.slice(1)
 				.replace(/[^a-zA-Z0-9\- ]/g, '')
 				.toLowerCase();
-			// Don't include this word in title
 		} else {
 			titleWords.push(word);
 		}
 	}
 
-	// Remove date texts from title
 	const title = titleWords
 		.filter(word => !dateTexts.some(dateText => dateText.includes(word)))
 		.join(' ')
@@ -64,6 +62,16 @@ export const convertStringToTaskBody = async (
 		projectId = await matchProjectIdByKey(foundProjectKey, client);
 	}
 
+	let reminders: TickTickReminder[] | undefined = undefined;
+	if (startDate) {
+		reminders = [
+			{
+				id: uuidv4(),
+				trigger: 'TRIGGER:-PT0S',
+			},
+		];
+	}
+
 	return {
 		title,
 		tags: tags.length > 0 ? tags : undefined,
@@ -72,6 +80,7 @@ export const convertStringToTaskBody = async (
 		dueDate,
 		timeZone,
 		isAllDay: startDate ? false : true,
+		reminders,
 	};
 };
 
