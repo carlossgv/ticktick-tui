@@ -1,6 +1,6 @@
 {
 	"name": "ticktick-tui",
-	"version": "0.1.0-alpha.5",
+	"version": "0.1.0-alpha.6",
 	"license": "MIT",
 	"bin": {
 		"ticktick-tui": "dist/cli.js"
