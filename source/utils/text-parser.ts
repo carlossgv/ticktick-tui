@@ -8,8 +8,8 @@ import {v4 as uuidv4} from 'uuid';
 const cleanProjectName = (name: string) =>
 	name
 		.normalize('NFD')
-		.replace(/[\u0300-\u036f]/g, '') // Remove accents
-		.replace(/[^a-zA-Z0-9\- ]/g, '') // Remove special chars except space and dashes
+		.replace(/[\u0300-\u036f]/g, '')
+		.replace(/[^a-zA-Z0-9\- ]/g, '')
 		.trim()
 		.replace(/\s+/g, '-')
 		.toLowerCase();
@@ -27,11 +27,62 @@ const matchProjectIdByKey = async (
 	return match?.id;
 };
 
+export type ParsedDates = {
+	startDate?: string;
+	dueDate?: string;
+	timeZone?: string;
+	dateTexts: string[];
+	isAllDay?: boolean;
+};
+
+export const extractDatesFromText = (text: string): ParsedDates => {
+	const results = chrono.parse(text, new Date(), {forwardDate: true});
+
+	let startDate: string | undefined;
+	let dueDate: string | undefined;
+	let isAllDay = true;
+	const dateTexts: string[] = [];
+
+	const formatToTickTick = (date: Date): string => {
+		return DateTime.fromJSDate(date, {zone: DEFAULT_TIMEZONE})
+			.toUTC()
+			.toFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZZ")
+			.replace(/(\+|-)\d\d:\d\d$/, '+0000');
+	};
+
+	if (results.length > 0) {
+		const first = results[0];
+		if (first?.start) {
+			startDate = formatToTickTick(first.start.date());
+			dateTexts.push(first.text);
+			// Correct way to check for a time
+			if (
+				first.start.isCertain('hour') // 'hour' is present
+			) {
+				isAllDay = false;
+			}
+		}
+
+		if (first?.end) {
+			dueDate = formatToTickTick(first.end.date());
+		} else if (results.length > 1) {
+			const second = results[1];
+			if (second?.start) {
+				dueDate = formatToTickTick(second.start.date());
+				dateTexts.push(second.text);
+			}
+		}
+	}
+
+	return {startDate, dueDate, timeZone: DEFAULT_TIMEZONE, dateTexts, isAllDay};
+};
+
 export const convertStringToTaskBody = async (
 	str: string,
 	client?: TickTickClient,
 ): Promise<TaskBody> => {
-	const {startDate, dueDate, timeZone, dateTexts} = extractDatesFromText(str);
+	const {startDate, dueDate, timeZone, dateTexts, isAllDay} =
+		extractDatesFromText(str);
 
 	const words = str.trim().split(/\s+/);
 	const tags: string[] = [];
@@ -63,7 +114,8 @@ export const convertStringToTaskBody = async (
 	}
 
 	let reminders: TickTickReminder[] | undefined = undefined;
-	if (startDate) {
+	// Only add reminder if not all day and there is a startDate
+	if (startDate && isAllDay === false) {
 		reminders = [
 			{
 				id: uuidv4(),
@@ -79,49 +131,7 @@ export const convertStringToTaskBody = async (
 		startDate,
 		dueDate,
 		timeZone,
-		isAllDay: startDate ? false : true,
+		isAllDay: typeof isAllDay === 'boolean' ? isAllDay : true,
 		reminders,
 	};
-};
-
-export type ParsedDates = {
-	startDate?: string;
-	dueDate?: string;
-	timeZone?: string;
-	dateTexts: string[];
-};
-
-export const extractDatesFromText = (text: string): ParsedDates => {
-	const results = chrono.parse(text, new Date(), {forwardDate: true});
-
-	let startDate: string | undefined;
-	let dueDate: string | undefined;
-	const dateTexts: string[] = [];
-
-	const formatToTickTick = (date: Date): string => {
-		return DateTime.fromJSDate(date, {zone: DEFAULT_TIMEZONE})
-			.toUTC()
-			.toFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZZ")
-			.replace(/(\+|-)\d\d:\d\d$/, '+0000'); // Ensure +0000 format
-	};
-
-	if (results.length > 0) {
-		const first = results[0];
-		if (first?.start) {
-			startDate = formatToTickTick(first.start.date());
-			dateTexts.push(first.text);
-		}
-
-		if (first?.end) {
-			dueDate = formatToTickTick(first.end.date());
-		} else if (results.length > 1) {
-			const second = results[1];
-			if (second?.start) {
-				dueDate = formatToTickTick(second.start.date());
-				dateTexts.push(second.text);
-			}
-		}
-	}
-
-	return {startDate, dueDate, timeZone: DEFAULT_TIMEZONE, dateTexts};
 };
