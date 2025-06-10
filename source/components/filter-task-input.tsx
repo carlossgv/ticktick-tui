@@ -3,27 +3,27 @@ import {Box, Text} from 'ink';
 import {TextInput} from '@inkjs/ui';
 
 type Props = {
-	text: string;
+	value: string;
 	onChange?: (value: string) => void;
 	onSubmit?: (value: string) => void;
 	isDisabled?: boolean;
 	placeholder?: string;
 };
 
-const NewTaskInput = ({
-	text,
+const FilterTaskInput = ({
+	value,
 	onChange,
 	onSubmit,
 	isDisabled = false,
-	placeholder = 'Type your new task...',
+	placeholder = 'Type to filter...',
 }: Props) => {
 	return (
-		<Box borderStyle="single" borderColor="green" marginBottom={1} paddingX={1}>
-			<Text color="cyan">➤ </Text>
+		<Box>
+			<Text color="cyan">/</Text>
 			<TextInput
 				isDisabled={isDisabled}
 				placeholder={placeholder}
-				defaultValue={text}
+				defaultValue={value}
 				onChange={onChange}
 				onSubmit={onSubmit}
 			/>
@@ -31,4 +31,4 @@ const NewTaskInput = ({
 	);
 };
 
-export default NewTaskInput;
+export default FilterTaskInput;

@@ -7,6 +7,7 @@ import ProjectList from './components/project-list.js';
 import {convertStringToTaskBody} from './utils/text-parser.js';
 import {DeleteTaskParams, TickTickTask} from './types/ticktick.types.js';
 import NewTaskInput from './components/new-task-input.js';
+import FilterTaskInput from './components/filter-task-input.js';
 
 type AppProps = {
 	client: TickTickClient;
@@ -164,6 +165,21 @@ const App = ({client}: AppProps) => {
 			return;
 		}
 
+		// When filter is active and not editing, allow esc and / to operate as described
+		if (filterActive) {
+			if (key.escape) {
+				setFilterActive(false);
+				setFilterValue('');
+				setTasks(allTasks);
+				return;
+			}
+			if (input === '/') {
+				setIsFiltering(true);
+				// keep filterValue as is
+				return;
+			}
+		}
+
 		if (isAdding) {
 			if (key.return) {
 				if (newTaskInput.trim()) {
@@ -208,8 +224,8 @@ const App = ({client}: AppProps) => {
 
 		if (input === '/') {
 			setIsFiltering(true);
-			setFilterValue('');
-			setFilterActive(false);
+			// keep filterValue as is
+			setFilterActive(false); // entering filter mode, not active yet
 			return;
 		}
 
@@ -353,21 +369,29 @@ const App = ({client}: AppProps) => {
 						<Text color="green">{projects[selectedProjectIndex]?.name}</Text>
 						<Text color="gray">{` (sorted by: ${sortType} ${sortReversed ? '↑' : '↓'})`}</Text>
 					</Box>
-					{isFiltering ? (
-						<Box>
-							<Text color="cyan">/</Text>
-							<Text color="cyan">{filterValue}</Text>
-							<Text color="gray">
-								{` (type to filter, Enter to apply, Esc to cancel)`}
-							</Text>
-						</Box>
-					) : filterActive && filterValue.trim() !== '' ? (
-						<Box>
-							<Text color="cyan">/{filterValue}</Text>
-							<Text color="gray">{' (press / to edit, Esc to clear)'}</Text>
-						</Box>
-					) : null}
-					{isAdding && <NewTaskInput text={newTaskInput} />}
+{isFiltering ? (
+	<FilterTaskInput
+		value={filterValue}
+		onChange={setFilterValue}
+		onSubmit={() => {
+			setIsFiltering(false);
+			setFilterActive(true);
+			setSelectedColumn(1); // move to tasks
+		}}
+		isDisabled={false}
+	/>
+) : filterActive && filterValue.trim() !== '' ? (
+	<Box>
+		<Text color="cyan">/{filterValue}</Text>
+		<Text color="gray">{' (press / to edit, Esc to clear)'}</Text>
+	</Box>
+) : null}
+{isAdding && (
+	<NewTaskInput
+		text={newTaskInput}
+		onChange={setNewTaskInput}
+	/>
+)}
 					<TaskList
 						tasks={sortedTasks}
 						selectedIndex={selectedTaskIndex}
