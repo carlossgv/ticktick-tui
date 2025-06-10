@@ -6,6 +6,7 @@ import {convertStringToTaskBody} from './utils/text-parser.js';
 import {TickTickClient} from './clients/ticktick.client.js';
 import prompts from 'prompts';
 import {withFullScreen} from 'fullscreen-ink';
+import {Logger} from './utils/logger.js';
 
 const quickAddTask = async (text: string) => {
 	try {
@@ -106,5 +107,6 @@ if (cli.flags.logout) {
 		process.exit(1);
 	}
 
+	Logger.info('Starting TickTick TUI with existing session...');
 	withFullScreen(<App client={client} />).start();
 }

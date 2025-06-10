@@ -1,4 +1,4 @@
-import {TaskBody, TickTickReminder} from '../types/ticktick.types.js';
+import {UpdateTaskParams, TickTickReminder} from '../types/ticktick.types.js';
 import * as chrono from 'chrono-node';
 const DEFAULT_TIMEZONE = 'America/Santiago';
 import {DateTime} from 'luxon';
@@ -33,6 +33,13 @@ export type ParsedDates = {
 	timeZone?: string;
 	dateTexts: string[];
 	isAllDay?: boolean;
+};
+
+export const now = () => {
+	return DateTime.fromJSDate(new Date(), {zone: DEFAULT_TIMEZONE})
+		.toUTC()
+		.toFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZZ")
+		.replace(/(\+|-)\d\d:\d\d$/, '+0000');
 };
 
 export const extractDatesFromText = (text: string): ParsedDates => {
@@ -80,7 +87,7 @@ export const extractDatesFromText = (text: string): ParsedDates => {
 export const convertStringToTaskBody = async (
 	str: string,
 	client?: TickTickClient,
-): Promise<TaskBody> => {
+): Promise<UpdateTaskParams> => {
 	const {startDate, dueDate, timeZone, dateTexts, isAllDay} =
 		extractDatesFromText(str);
 

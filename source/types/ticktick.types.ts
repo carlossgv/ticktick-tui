@@ -47,9 +47,10 @@ export type TickTickTask = {
 	startDate?: string;
 	dueDate?: string;
 	createdTime: string;
+	creator: number;
 	// desc: string;
 	// isFloating: boolean;
-	// isAllDay: boolean;
+	isAllDay: boolean;
 	// reminder: string;
 	// repeatFirstDate: string;
 	// repeatFlag: string;
@@ -63,7 +64,6 @@ export type TickTickTask = {
 	// modifiedTime: string;
 	// etag: string;
 	// deleted: number;
-	// creator: number;
 	// repeatFrom: string;
 	// attachments: any[]; // You can refine this too
 	// commentCount: number;
@@ -133,7 +133,7 @@ export type DeleteTaskParams = {
 	projectId: string;
 };
 
-export type TaskBody = {
+export type UpdateTaskParams = {
 	title: string;
 	id?: string;
 	projectId?: string;
@@ -143,6 +143,9 @@ export type TaskBody = {
 	dueDate?: string;
 	timeZone?: string;
 	isAllDay?: boolean;
+	completedTime?: string;
+	completedUserId?: number;
+	creator?: number;
 };
 
 export enum Action {
@@ -152,8 +155,8 @@ export enum Action {
 }
 
 export type HandleTasksBody = {
-	add: TaskBody[];
-	update: TaskBody[];
+	add: UpdateTaskParams[];
+	update: UpdateTaskParams[];
 	delete: DeleteTaskParams[];
 };
 

@@ -5,7 +5,7 @@ import os from 'os';
 import {
 	ErrorLoginResponse,
 	HandleTasksBody,
-	TaskBody as AddTaskParams,
+	UpdateTaskParams,
 	TaskOperationResponse,
 	TickTickMainResponse,
 	TickTickProject,
@@ -15,7 +15,7 @@ import {
 	Condition,
 } from '../types/ticktick.types.js';
 import {List} from '../types/list.types.js';
-import {Task} from '../types/tasks.types.js';
+import {now} from '../utils/text-parser.js';
 
 function getFilePath(filename: string): string {
 	const home = os.homedir();
@@ -134,7 +134,7 @@ export class TickTickClient {
 		return response.data;
 	}
 
-	getTasksByProjectId(projectId: string): Task[] {
+	getTasksByProjectId(projectId: string): TickTickTask[] {
 		const tasks = this.mainData!.syncTaskBean.update.filter(
 			task => task.projectId === projectId,
 		);
@@ -146,22 +146,10 @@ export class TickTickClient {
 		// Sort tasks in descending order of sortOrder
 		const sortedTasks = tasks.sort((a, b) => a.sortOrder - b.sortOrder);
 
-		return sortedTasks.map(this.mapTickTickTaskToTask);
+		return sortedTasks;
 	}
 
-	mapTickTickTaskToTask(tickTickTask: TickTickTask): Task {
-		return {
-			title: tickTickTask.title,
-			id: tickTickTask.id,
-			content: tickTickTask.content,
-			tags: tickTickTask.tags,
-			startDate: tickTickTask.startDate,
-			dueDate: tickTickTask.dueDate,
-			timeZone: tickTickTask.timeZone,
-		};
-	}
-
-	getInboxTasks(): Task[] {
+	getInboxTasks(): TickTickTask[] {
 		return this.getTasksByProjectId(this.inboxId!);
 	}
 
@@ -212,7 +200,50 @@ export class TickTickClient {
 		}
 	}
 
-	async addTasks(tasks: AddTaskParams[]): Promise<void> {
+	async completeTasks(tasks: UpdateTaskParams[]): Promise<void> {
+		const completedTasks = tasks.map(task => ({
+			...task,
+			completedTime: now(),
+			status: 2,
+			// TODO: can it be another user?
+			completedUserId: task.creator,
+		}));
+
+		await this.updateTasks(completedTasks);
+	}
+
+	async updateTasks(tasks: UpdateTaskParams[]): Promise<void> {
+		const updatedTasks = tasks.map(task => ({
+			...task,
+			modifiedTime: now(),
+		}));
+
+		const body: HandleTasksBody = {
+			add: [],
+			update: updatedTasks,
+			delete: [],
+		};
+
+		const cookies = await this.getSessionCookies();
+
+		const response = await this.axiosInstance.post<TaskOperationResponse>(
+			`${this.ticktickUrl}/batch/task`,
+			body,
+			{
+				headers: {
+					Cookie: cookies.join(';'),
+				},
+			},
+		);
+
+		if (!response.data || Object.keys(response.data.id2error).length > 0) {
+			console.error(
+				`Error in task operation: ${JSON.stringify(response.data.id2error)}`,
+			);
+		}
+	}
+
+	async addTasks(tasks: UpdateTaskParams[]): Promise<void> {
 		const body: HandleTasksBody = {
 			add: tasks,
 			update: [],
@@ -312,7 +343,7 @@ export class TickTickClient {
 	};
 
 	// Main filter method
-	getTasksByFilter(filterId: string): Task[] {
+	getTasksByFilter(filterId: string): TickTickTask[] {
 		const tasks = this.mainData!.syncTaskBean.update;
 		const filter = this.mainData!.filters.find(f => f.id === filterId);
 
@@ -322,24 +353,25 @@ export class TickTickClient {
 		}
 
 		if (!filter.rule) {
-			return tasks.map(this.mapTickTickTaskToTask);
+			// return tasks.map(this.mapTickTickTaskToTask);
+			return tasks;
 		}
 
 		const rule = this.parseFilterRule(filter?.rule);
 
 		if (!rule) {
 			console.error('Invalid filter rule');
-			return tasks.map(this.mapTickTickTaskToTask);
+			// return tasks.map(this.mapTickTickTaskToTask);
+			return tasks;
 		}
 
-		return tasks
-			.filter(task => {
-				return rule.and.every(condition => {
-					const mapper = this.conditionMappers[condition.conditionName];
-					if (!mapper) return true; // If unknown condition, ignore it
-					return mapper(task, condition);
-				});
-			})
-			.map(this.mapTickTickTaskToTask);
+		return tasks.filter(task => {
+			return rule.and.every(condition => {
+				const mapper = this.conditionMappers[condition.conditionName];
+				if (!mapper) return true; // If unknown condition, ignore it
+				return mapper(task, condition);
+			});
+		});
+		// .map(this.mapTickTickTaskToTask);
 	}
 }

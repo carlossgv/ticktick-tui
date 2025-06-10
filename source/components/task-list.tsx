@@ -1,11 +1,11 @@
-import React, {useMemo, useRef, useEffect, useState} from 'react';
-import {Box, Text, measureElement} from 'ink';
+import React, {useMemo} from 'react';
+import {Box, Text} from 'ink';
 import {Spinner} from '@inkjs/ui';
 import {DateTime} from 'luxon';
-import {Task} from '../types/tasks.types.js';
+import {TickTickTask} from '../types/ticktick.types.js';
 
 type TaskListProps = {
-	tasks: Task[];
+	tasks: TickTickTask[];
 	selectedIndex: number;
 	onSelect: (index: number) => void;
 	terminalHeight: number; // new prop
@@ -14,7 +14,7 @@ type TaskListProps = {
 const TaskList = ({tasks, selectedIndex, terminalHeight}: TaskListProps) => {
 	const visibleCount = Math.max(terminalHeight - 6, 1); // 2 for scroll indicators, 2 for padding
 
-	function parseDate(task: Task): string {
+	function parseDate(task: TickTickTask): string {
 		if (!task.startDate) return '';
 
 		const timeZone = task.timeZone || 'America/Santiago';

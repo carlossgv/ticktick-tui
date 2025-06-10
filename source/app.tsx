@@ -2,11 +2,10 @@ import React, {useEffect, useState} from 'react';
 import {Box, Newline, Text, useInput, useStdout} from 'ink';
 import TaskList from './components/task-list.js';
 import {TickTickClient} from './clients/ticktick.client.js';
-import {Task} from './types/tasks.types.js';
 import {List} from './types/list.types.js';
 import ProjectList from './components/project-list.js';
 import {convertStringToTaskBody} from './utils/text-parser.js';
-import {DeleteTaskParams} from './types/ticktick.types.js';
+import {DeleteTaskParams, TickTickTask} from './types/ticktick.types.js';
 import NewTaskInput from './components/new-task-input.js';
 
 type AppProps = {
@@ -18,10 +17,10 @@ type SortType = 'default' | 'date' | 'title';
 const sortTypes: SortType[] = ['default', 'date', 'title'];
 
 const getSortedTasks = (
-	tasks: Task[],
+	tasks: TickTickTask[],
 	sortType: SortType,
 	reversed: boolean,
-): Task[] => {
+): TickTickTask[] => {
 	const sorted = [...tasks];
 	switch (sortType) {
 		case 'date':
@@ -44,8 +43,8 @@ const getSortedTasks = (
 };
 
 const App = ({client}: AppProps) => {
-	const [tasks, setTasks] = useState<Task[]>([]);
-	const [sortedTasks, setSortedTasks] = useState<Task[]>([]);
+	const [tasks, setTasks] = useState<TickTickTask[]>([]);
+	const [sortedTasks, setSortedTasks] = useState<TickTickTask[]>([]);
 	const [projects, setProjects] = useState<List[]>([]);
 	const [selectedTaskIndex, setSelectedTaskIndex] = useState<number>(0);
 	const [selectedProjectIndex, setSelectedProjectIndex] = useState<number>(0);
@@ -53,6 +52,8 @@ const App = ({client}: AppProps) => {
 	const [isAdding, setIsAdding] = useState(false);
 	const [newTaskInput, setNewTaskInput] = useState('');
 	const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+	const [showCompleteConfirmation, setShowCompleteConfirmation] =
+		useState(false);
 	const {stdout} = useStdout();
 	const [terminalHeight, setTerminalHeight] = useState(stdout?.rows || 24);
 
@@ -151,6 +152,16 @@ const App = ({client}: AppProps) => {
 			return;
 		}
 
+		if (showCompleteConfirmation) {
+			if (input === 'y' || key.return) {
+				handleCompleteTask();
+				setShowCompleteConfirmation(false);
+			} else {
+				setShowCompleteConfirmation(false);
+			}
+			return;
+		}
+
 		if (input === 'n') {
 			setIsAdding(true);
 			setNewTaskInput('');
@@ -159,6 +170,12 @@ const App = ({client}: AppProps) => {
 
 		if (!isAdding && selectedColumn === 1 && input === 'd') {
 			setShowDeleteConfirmation(true);
+			return;
+		}
+
+		// Mark complete confirmation
+		if (!isAdding && selectedColumn === 1 && key.return) {
+			setShowCompleteConfirmation(true);
 			return;
 		}
 
@@ -232,6 +249,18 @@ const App = ({client}: AppProps) => {
 		setSelectedColumn(1);
 	};
 
+	const handleCompleteTask = async () => {
+		if (!selectedTask) return;
+		await client.completeTasks([selectedTask]);
+		await client.refreshMainData();
+		const project = projects[selectedProjectIndex];
+		if (!project) return;
+		setTasks(client.getTasksByProjectId(project.id) || []);
+		setSelectedTaskIndex(0);
+		setSelectedProjectIndex(projects.indexOf(project));
+		setSelectedColumn(1);
+	};
+
 	return (
 		<Box flexDirection="column" width="100%" height="100%" flexGrow={1}>
 			<Box flexDirection="row" width="100%" height="100%" flexGrow={1}>
@@ -283,6 +312,19 @@ const App = ({client}: AppProps) => {
 							<Text>Delete task &quot;{selectedTask?.title}&quot;? (y/n)</Text>
 						</Box>
 					)}
+					{showCompleteConfirmation && (
+						<Box
+							marginTop={1}
+							padding={1}
+							borderStyle="round"
+							borderColor="green"
+						>
+							<Text>
+								Mark task &quot;{selectedTask?.title}&quot; as completed?
+								(y/Enter = yes, any other key = cancel)
+							</Text>
+						</Box>
+					)}
 				</Box>
 
 				<Box
@@ -315,8 +357,8 @@ const App = ({client}: AppProps) => {
 				flexDirection="column"
 			>
 				<Text>
-					arrows / hjkl: move | (n)ew task | (d)elete task | (s)ort: {sortType}{' '}
-					| (r)everse sort
+					arrows / hjkl: move | (n)ew task | (d)elete task | (Enter) complete
+					task | (s)ort: {sortType} | (r)everse sort
 				</Text>
 			</Box>
 		</Box>
