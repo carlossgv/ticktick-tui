@@ -301,7 +301,10 @@ export class TickTickClient {
 	}
 
 	async getFilters(): Promise<List[]> {
-		const filters = this.mainData!.filters.map(filter => ({
+		if (!this.mainData?.filters) {
+			return [];
+		}
+		const filters = this.mainData.filters.map(filter => ({
 			id: filter.id,
 			name: filter.name,
 			isFilter: true,
@@ -345,7 +348,11 @@ export class TickTickClient {
 	// Main filter method
 	getTasksByFilter(filterId: string): TickTickTask[] {
 		const tasks = this.mainData!.syncTaskBean.update;
-		const filter = this.mainData!.filters.find(f => f.id === filterId);
+		if (!this.mainData?.filters) {
+			return [];
+		}
+
+		const filter = this.mainData.filters.find(f => f.id === filterId);
 
 		if (!filter) {
 			console.error('Filter not found');

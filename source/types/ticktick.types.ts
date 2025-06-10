@@ -3,7 +3,7 @@ export type TickTickMainResponse = {
 	syncTaskBean: {
 		update: TickTickTask[];
 	};
-	filters: TickTickFilter[];
+	filters: TickTickFilter[] | null;
 };
 
 export type TickTickFilter = {

@@ -2,10 +2,10 @@
 import React from 'react';
 import meow from 'meow';
 import App from './app.js';
-import { convertStringToTaskBody } from './utils/text-parser.js';
-import { TickTickClient } from './clients/ticktick.client.js';
+import {convertStringToTaskBody} from './utils/text-parser.js';
+import {TickTickClient} from './clients/ticktick.client.js';
 import prompts from 'prompts';
-import { withFullScreen } from 'fullscreen-ink';
+import {withFullScreen} from 'fullscreen-ink';
 
 const quickAddTask = async (text: string) => {
 	try {
