@@ -2,7 +2,7 @@
 	"name": "ticktick-tui",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/carlossgv/ticktick-tui.git"
+		"url": "github:carlossgv/ticktick-tui.git"
 	},
 	"version": "0.1.0-alpha.8",
 	"license": "MIT",
