@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from 'react';
-import { Box, Newline, Text, useInput, useStdout } from 'ink';
+import React, {useEffect, useState} from 'react';
+import {Box, Newline, Text, useInput, useStdout} from 'ink';
 import TaskList from './components/task-list.js';
-import { TickTickClient } from './clients/ticktick.client.js';
-import { List } from './types/list.types.js';
+import {TickTickClient} from './clients/ticktick.client.js';
+import {List} from './types/list.types.js';
 import ProjectList from './components/project-list.js';
-import { convertStringToTaskBody } from './utils/text-parser.js';
-import { DeleteTaskParams, TickTickTask } from './types/ticktick.types.js';
+import {convertStringToTaskBody} from './utils/text-parser.js';
+import {DeleteTaskParams, TickTickTask} from './types/ticktick.types.js';
 import NewTaskInput from './components/new-task-input.js';
 
 type AppProps = {
@@ -42,9 +42,10 @@ const getSortedTasks = (
 	return sorted;
 };
 
-const App = ({ client }: AppProps) => {
+const App = ({client}: AppProps) => {
 	const [loading, setLoading] = useState(true);
 	const [tasks, setTasks] = useState<TickTickTask[]>([]);
+	const [allTasks, setAllTasks] = useState<TickTickTask[]>([]);
 	const [sortedTasks, setSortedTasks] = useState<TickTickTask[]>([]);
 	const [projects, setProjects] = useState<List[]>([]);
 	const [selectedTaskIndex, setSelectedTaskIndex] = useState<number>(0);
@@ -55,10 +56,15 @@ const App = ({ client }: AppProps) => {
 	const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 	const [showCompleteConfirmation, setShowCompleteConfirmation] =
 		useState(false);
-	const { stdout } = useStdout();
+	const {stdout} = useStdout();
 	const [terminalHeight, setTerminalHeight] = useState(stdout?.rows || 24);
 	const [sortType, setSortType] = useState<SortType>('default');
 	const [sortReversed, setSortReversed] = useState<boolean>(false);
+
+	// Filter state
+	const [isFiltering, setIsFiltering] = useState(false);
+	const [filterValue, setFilterValue] = useState('');
+	const [filterActive, setFilterActive] = useState(false);
 
 	useEffect(() => {
 		if (!stdout) return;
@@ -83,6 +89,7 @@ const App = ({ client }: AppProps) => {
 				...fetchedProjects,
 			]);
 			const fetchedTasks = client.getInboxTasks();
+			setAllTasks(fetchedTasks);
 			setTasks(fetchedTasks);
 			setLoading(false);
 		};
@@ -100,27 +107,63 @@ const App = ({ client }: AppProps) => {
 	}, [selectedProjectIndex]);
 
 	useEffect(() => {
-		setSortedTasks(getSortedTasks(tasks, sortType, sortReversed));
-		// Reset selection if tasks count changes
-		setSelectedTaskIndex(i => Math.min(i, tasks.length - 1));
-	}, [tasks, sortType, sortReversed]);
+		// Filtering logic
+		let toSort = tasks;
+		if ((isFiltering || filterActive) && filterValue.trim() !== '') {
+			const value = filterValue.toLowerCase();
+			toSort = tasks.filter(
+				task =>
+					(task.title && task.title.toLowerCase().includes(value)) ||
+					(task.content && task.content.toLowerCase().includes(value)) ||
+					(task.tags &&
+						task.tags.some(tag => tag.toLowerCase().includes(value))),
+			);
+		}
+		setSortedTasks(getSortedTasks(toSort, sortType, sortReversed));
+		setSelectedTaskIndex(i => Math.min(i, toSort.length - 1));
+	}, [tasks, sortType, sortReversed, filterActive, filterValue, isFiltering]);
 
 	const handleProjectSelect = (id: string) => {
 		const selectedProject = projects.find(project => project.id === id);
 		if (selectedProject) {
 			setSelectedProjectIndex(projects.indexOf(selectedProject));
-			setTasks(
-				selectedProject.isFilter
-					? client?.getTasksByFilter(id) || []
-					: client?.getTasksByProjectId(id) || [],
-			);
+			const projectTasks = selectedProject.isFilter
+				? client?.getTasksByFilter(id) || []
+				: client?.getTasksByProjectId(id) || [];
+			setAllTasks(projectTasks);
+			setTasks(projectTasks);
 			setSelectedTaskIndex(0);
+			setFilterActive(false); // reset filter on project switch
+			setFilterValue('');
 		}
 	};
 
 	const selectedTask = sortedTasks[selectedTaskIndex];
 
 	useInput((input, key) => {
+		// Filtering mode: live update filterValue and the filtered list
+		if (isFiltering) {
+			if (key.return) {
+				setIsFiltering(false);
+				setFilterActive(true);
+				setSelectedColumn(1); // move to tasks
+				return;
+			}
+			if (key.escape) {
+				setIsFiltering(false);
+				setFilterValue('');
+				setFilterActive(false);
+				setTasks(allTasks); // reset tasks to original for project
+				return;
+			}
+			if (key.delete || key.backspace) {
+				setFilterValue(val => val.slice(0, -1));
+			} else if (input.length === 1) {
+				setFilterValue(val => val + input);
+			}
+			return;
+		}
+
 		if (isAdding) {
 			if (key.return) {
 				if (newTaskInput.trim()) {
@@ -160,6 +203,13 @@ const App = ({ client }: AppProps) => {
 			} else {
 				setShowCompleteConfirmation(false);
 			}
+			return;
+		}
+
+		if (input === '/') {
+			setIsFiltering(true);
+			setFilterValue('');
+			setFilterActive(false);
 			return;
 		}
 
@@ -228,7 +278,9 @@ const App = ({ client }: AppProps) => {
 		await client.refreshMainData();
 		const project = projects[selectedProjectIndex];
 		if (!project) return;
-		setTasks(client.getTasksByProjectId(project.id) || []);
+		const projectTasks = client.getTasksByProjectId(project.id) || [];
+		setAllTasks(projectTasks);
+		setTasks(projectTasks);
 		setSelectedTaskIndex(0);
 		setSelectedProjectIndex(projects.indexOf(project));
 		setSelectedColumn(1);
@@ -244,7 +296,9 @@ const App = ({ client }: AppProps) => {
 		await client.refreshMainData();
 		const project = projects[selectedProjectIndex];
 		if (!project) return;
-		setTasks(client.getTasksByProjectId(project.id) || []);
+		const projectTasks = client.getTasksByProjectId(project.id) || [];
+		setAllTasks(projectTasks);
+		setTasks(projectTasks);
 		setSelectedTaskIndex(0);
 		setSelectedProjectIndex(projects.indexOf(project));
 		setSelectedColumn(1);
@@ -256,7 +310,9 @@ const App = ({ client }: AppProps) => {
 		await client.refreshMainData();
 		const project = projects[selectedProjectIndex];
 		if (!project) return;
-		setTasks(client.getTasksByProjectId(project.id) || []);
+		const projectTasks = client.getTasksByProjectId(project.id) || [];
+		setAllTasks(projectTasks);
+		setTasks(projectTasks);
 		setSelectedTaskIndex(0);
 		setSelectedProjectIndex(projects.indexOf(project));
 		setSelectedColumn(1);
@@ -274,7 +330,7 @@ const App = ({ client }: AppProps) => {
 					<ProjectList
 						projects={projects.map(p => {
 							const amount = client.getTasksByProjectId(p.id).length || 0;
-							return { ...p, amount };
+							return {...p, amount};
 						})}
 						selectedIndex={selectedProjectIndex}
 						onSelect={setSelectedProjectIndex}
@@ -297,6 +353,20 @@ const App = ({ client }: AppProps) => {
 						<Text color="green">{projects[selectedProjectIndex]?.name}</Text>
 						<Text color="gray">{` (sorted by: ${sortType} ${sortReversed ? '↑' : '↓'})`}</Text>
 					</Box>
+					{isFiltering ? (
+						<Box>
+							<Text color="cyan">/</Text>
+							<Text color="cyan">{filterValue}</Text>
+							<Text color="gray">
+								{` (type to filter, Enter to apply, Esc to cancel)`}
+							</Text>
+						</Box>
+					) : filterActive && filterValue.trim() !== '' ? (
+						<Box>
+							<Text color="cyan">/{filterValue}</Text>
+							<Text color="gray">{' (press / to edit, Esc to clear)'}</Text>
+						</Box>
+					) : null}
 					{isAdding && <NewTaskInput text={newTaskInput} />}
 					<TaskList
 						tasks={sortedTasks}
@@ -360,8 +430,8 @@ const App = ({ client }: AppProps) => {
 				flexDirection="column"
 			>
 				<Text>
-					arrows / hjkl: move | (n)ew task | (d)elete task | (Enter) complete
-					task | (s)ort: {sortType} | (r)everse sort
+					arrows / hjkl: move | /: filter | (n)ew task | (d)elete task | (Enter)
+					complete task | (s)ort: {sortType} | (r)everse sort
 				</Text>
 			</Box>
 		</Box>
