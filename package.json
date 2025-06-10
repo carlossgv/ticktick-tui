@@ -4,7 +4,7 @@
 		"type": "git",
 		"url": "github:carlossgv/ticktick-tui.git"
 	},
-	"version": "0.1.0-alpha.9",
+	"version": "0.1.0-alpha.10",
 	"license": "MIT",
 	"bin": {
 		"ticktick-tui": "dist/cli.js"
