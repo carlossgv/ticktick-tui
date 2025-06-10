@@ -353,7 +353,6 @@ export class TickTickClient {
 		}
 
 		if (!filter.rule) {
-			// return tasks.map(this.mapTickTickTaskToTask);
 			return tasks;
 		}
 
@@ -361,7 +360,6 @@ export class TickTickClient {
 
 		if (!rule) {
 			console.error('Invalid filter rule');
-			// return tasks.map(this.mapTickTickTaskToTask);
 			return tasks;
 		}
 
@@ -372,6 +370,5 @@ export class TickTickClient {
 				return mapper(task, condition);
 			});
 		});
-		// .map(this.mapTickTickTaskToTask);
 	}
 }
