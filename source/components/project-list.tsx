@@ -11,12 +11,20 @@ type ProjectListProps = {
 	projects: ProjectWithAmount[];
 	selectedIndex: number;
 	onSelect: (index: number) => void;
+	isLoading: boolean;
 };
 
-const ProjectList = ({projects, selectedIndex}: ProjectListProps) => {
+const ProjectList = ({
+	projects,
+	selectedIndex,
+	isLoading,
+}: ProjectListProps) => {
 	return (
 		<Box flexDirection="column" padding={1}>
-			{projects.length === 0 && <Spinner label="Loading" />}
+			{isLoading && <Spinner label="Loading" />}
+			{!isLoading && projects.length === 0 && (
+				<Text color="gray">No projects</Text>
+			)}
 			{projects.map((project, index) => (
 				<Text
 					key={project.id}

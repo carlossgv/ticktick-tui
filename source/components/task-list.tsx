@@ -9,9 +9,15 @@ type TaskListProps = {
 	selectedIndex: number;
 	onSelect: (index: number) => void;
 	terminalHeight: number; // new prop
+	isLoading: boolean; // optional prop for loading state
 };
 
-const TaskList = ({tasks, selectedIndex, terminalHeight}: TaskListProps) => {
+const TaskList = ({
+	tasks,
+	selectedIndex,
+	terminalHeight,
+	isLoading,
+}: TaskListProps) => {
 	const visibleCount = Math.max(terminalHeight - 6, 1); // 2 for scroll indicators, 2 for padding
 
 	function parseDate(task: TickTickTask): string {
@@ -47,7 +53,8 @@ const TaskList = ({tasks, selectedIndex, terminalHeight}: TaskListProps) => {
 
 	return (
 		<Box flexDirection="column">
-			{tasks.length === 0 && <Spinner label="Loading" />}
+			{isLoading && <Spinner label="Loading" />}
+			{!isLoading && tasks.length === 0 && <Text color="gray">No tasks</Text>}
 
 			{scrollOffset > 0 && <Text color="gray">↑ More</Text>}
 

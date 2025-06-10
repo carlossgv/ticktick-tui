@@ -43,6 +43,7 @@ const getSortedTasks = (
 };
 
 const App = ({client}: AppProps) => {
+	const [loading, setLoading] = useState(true);
 	const [tasks, setTasks] = useState<TickTickTask[]>([]);
 	const [sortedTasks, setSortedTasks] = useState<TickTickTask[]>([]);
 	const [projects, setProjects] = useState<List[]>([]);
@@ -56,7 +57,6 @@ const App = ({client}: AppProps) => {
 		useState(false);
 	const {stdout} = useStdout();
 	const [terminalHeight, setTerminalHeight] = useState(stdout?.rows || 24);
-
 	const [sortType, setSortType] = useState<SortType>('default');
 	const [sortReversed, setSortReversed] = useState<boolean>(false);
 
@@ -84,6 +84,7 @@ const App = ({client}: AppProps) => {
 			]);
 			const fetchedTasks = client.getInboxTasks();
 			setTasks(fetchedTasks);
+			setLoading(false);
 		};
 
 		fetchData().catch(console.error);
@@ -277,6 +278,7 @@ const App = ({client}: AppProps) => {
 						})}
 						selectedIndex={selectedProjectIndex}
 						onSelect={setSelectedProjectIndex}
+						isLoading={loading}
 					/>
 				</Box>
 
@@ -301,6 +303,7 @@ const App = ({client}: AppProps) => {
 						selectedIndex={selectedTaskIndex}
 						onSelect={setSelectedTaskIndex}
 						terminalHeight={terminalHeight}
+						isLoading={loading}
 					/>
 					{showDeleteConfirmation && (
 						<Box

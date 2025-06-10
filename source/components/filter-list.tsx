@@ -12,12 +12,21 @@ type FiltersListProps = {
 	filters: Filter[];
 	selectedIndex: number;
 	onSelect: (index: number) => void;
+	isLoading: boolean;
 };
 
-const FiltersList = ({filters, selectedIndex, onSelect}: FiltersListProps) => {
+const FiltersList = ({
+	filters,
+	selectedIndex,
+	onSelect,
+	isLoading,
+}: FiltersListProps) => {
 	return (
 		<Box flexDirection="column" padding={1}>
-			{filters.length === 0 && <Spinner label="Loading" />}
+			{isLoading && <Spinner label="Loading" />}
+			{!isLoading && filters.length === 0 && (
+				<Text color="gray">No filters</Text>
+			)}
 			{filters.map((filter, index) => (
 				<Text
 					key={filter.id}
