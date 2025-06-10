@@ -107,6 +107,5 @@ if (cli.flags.logout) {
 		process.exit(1);
 	}
 
-	Logger.info('Starting TickTick TUI with existing session...');
 	withFullScreen(<App client={client} />).start();
 }
