@@ -1,11 +1,11 @@
-import React, {useEffect, useState} from 'react';
-import {Box, Newline, Text, useInput, useStdout} from 'ink';
+import React, { useEffect, useState } from 'react';
+import { Box, Newline, Text, useInput, useStdout } from 'ink';
 import TaskList from './components/task-list.js';
-import {TickTickClient} from './clients/ticktick.client.js';
-import {List} from './types/list.types.js';
+import { TickTickClient } from './clients/ticktick.client.js';
+import { List } from './types/list.types.js';
 import ProjectList from './components/project-list.js';
-import {convertStringToTaskBody} from './utils/text-parser.js';
-import {DeleteTaskParams, TickTickTask} from './types/ticktick.types.js';
+import { convertStringToTaskBody } from './utils/text-parser.js';
+import { DeleteTaskParams, TickTickTask } from './types/ticktick.types.js';
 import NewTaskInput from './components/new-task-input.js';
 
 type AppProps = {
@@ -42,7 +42,7 @@ const getSortedTasks = (
 	return sorted;
 };
 
-const App = ({client}: AppProps) => {
+const App = ({ client }: AppProps) => {
 	const [loading, setLoading] = useState(true);
 	const [tasks, setTasks] = useState<TickTickTask[]>([]);
 	const [sortedTasks, setSortedTasks] = useState<TickTickTask[]>([]);
@@ -55,7 +55,7 @@ const App = ({client}: AppProps) => {
 	const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 	const [showCompleteConfirmation, setShowCompleteConfirmation] =
 		useState(false);
-	const {stdout} = useStdout();
+	const { stdout } = useStdout();
 	const [terminalHeight, setTerminalHeight] = useState(stdout?.rows || 24);
 	const [sortType, setSortType] = useState<SortType>('default');
 	const [sortReversed, setSortReversed] = useState<boolean>(false);
@@ -268,13 +268,13 @@ const App = ({client}: AppProps) => {
 				<Box
 					width="25%"
 					flexDirection="column"
-					borderStyle="single"
+					borderStyle={selectedColumn === 0 ? 'bold' : 'single'}
 					borderColor={selectedColumn === 0 ? 'green' : 'gray'}
 				>
 					<ProjectList
 						projects={projects.map(p => {
 							const amount = client.getTasksByProjectId(p.id).length || 0;
-							return {...p, amount};
+							return { ...p, amount };
 						})}
 						selectedIndex={selectedProjectIndex}
 						onSelect={setSelectedProjectIndex}
@@ -285,7 +285,7 @@ const App = ({client}: AppProps) => {
 				<Box
 					width="50%"
 					flexDirection="column"
-					borderStyle="single"
+					borderStyle={selectedColumn === 1 ? 'bold' : 'single'}
 					borderColor={selectedColumn === 1 ? 'green' : 'gray'}
 					padding={1}
 				>
@@ -333,7 +333,7 @@ const App = ({client}: AppProps) => {
 				<Box
 					width="25%"
 					flexDirection="column"
-					borderStyle="single"
+					borderStyle={selectedColumn === 2 ? 'bold' : 'single'}
 					borderColor={selectedColumn === 2 ? 'green' : 'gray'}
 					padding={1}
 				>
