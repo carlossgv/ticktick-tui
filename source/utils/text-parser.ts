@@ -1,9 +1,51 @@
-import {UpdateTaskParams, TickTickReminder} from '../types/ticktick.types.js';
+import { UpdateTaskParams, TickTickReminder } from '../types/ticktick.types.js';
 import * as chrono from 'chrono-node';
 const DEFAULT_TIMEZONE = 'America/Santiago';
-import {DateTime} from 'luxon';
-import {TickTickClient} from '../clients/ticktick.client.js';
-import {v4 as uuidv4} from 'uuid';
+import { DateTime } from 'luxon';
+import { TickTickClient } from '../clients/ticktick.client.js';
+import { v4 as uuidv4 } from 'uuid';
+
+
+const minutesFromToken = (num: number, unit: string | undefined) => {
+	if (!unit) return NaN
+
+	switch (unit.toLowerCase()) {
+		case 'm': return num;          // minutes
+		case 'h': return num * 60;     // hours
+		case 'd': return num * 1440;   // days
+		default: return NaN;
+	}
+};
+
+type SimpleReminderParse = { reminders?: TickTickReminder[]; consumed: string[] };
+
+const extractSimpleTriggers = (text: string): SimpleReminderParse => {
+	const re = /(^|\s)(-(\d+)([mhd]))(?=\s|$)/gi;
+	const consumed: string[] = [];
+	const out: TickTickReminder[] = [];
+	let m: RegExpExecArray | null;
+
+	while ((m = re.exec(text)) !== null) {
+		const full = m[2];       // e.g., "-30m"
+		const num = Number(m[3]);
+		const unit = m[4];
+
+		const mins = minutesFromToken(num, unit);
+		if (!Number.isFinite(mins)) continue;
+
+		// Always "before" → negative minutes in TickTick format
+		out.push({
+			id: uuidv4(),
+			trigger: `TRIGGER:-PT${Math.trunc(mins)}M`,
+		});
+		full && consumed.push(full);
+	}
+
+	// Dedup same trigger strings
+	const uniq = new Map<string, TickTickReminder>();
+	for (const r of out) uniq.set(r.trigger, r);
+	return { reminders: uniq.size ? Array.from(uniq.values()) : undefined, consumed };
+};
 
 const cleanProjectName = (name: string) =>
 	name
@@ -36,14 +78,14 @@ export type ParsedDates = {
 };
 
 export const now = () => {
-	return DateTime.fromJSDate(new Date(), {zone: DEFAULT_TIMEZONE})
+	return DateTime.fromJSDate(new Date(), { zone: DEFAULT_TIMEZONE })
 		.toUTC()
 		.toFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZZ")
 		.replace(/(\+|-)\d\d:\d\d$/, '+0000');
 };
 
 export const extractDatesFromText = (text: string): ParsedDates => {
-	const results = chrono.parse(text, new Date(), {forwardDate: true});
+	const results = chrono.parse(text, new Date(), { forwardDate: true });
 
 	let startDate: string | undefined;
 	let dueDate: string | undefined;
@@ -51,7 +93,7 @@ export const extractDatesFromText = (text: string): ParsedDates => {
 	const dateTexts: string[] = [];
 
 	const formatToTickTick = (date: Date): string => {
-		return DateTime.fromJSDate(date, {zone: DEFAULT_TIMEZONE})
+		return DateTime.fromJSDate(date, { zone: DEFAULT_TIMEZONE })
 			.toUTC()
 			.toFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZZ")
 			.replace(/(\+|-)\d\d:\d\d$/, '+0000');
@@ -81,15 +123,18 @@ export const extractDatesFromText = (text: string): ParsedDates => {
 		}
 	}
 
-	return {startDate, dueDate, timeZone: DEFAULT_TIMEZONE, dateTexts, isAllDay};
+	return { startDate, dueDate, timeZone: DEFAULT_TIMEZONE, dateTexts, isAllDay };
 };
 
 export const convertStringToTaskBody = async (
 	str: string,
 	client?: TickTickClient,
 ): Promise<UpdateTaskParams> => {
-	const {startDate, dueDate, timeZone, dateTexts, isAllDay} =
+	const { startDate, dueDate, timeZone, dateTexts, isAllDay } =
 		extractDatesFromText(str);
+
+  const { reminders: userReminders, consumed: triggerTokens } = extractSimpleTriggers(str);
+
 
 	const words = str.trim().split(/\s+/);
 	const tags: string[] = [];
@@ -109,10 +154,12 @@ export const convertStringToTaskBody = async (
 		}
 	}
 
-	const title = titleWords
-		.filter(word => !dateTexts.some(dateText => dateText.includes(word)))
-		.join(' ')
-		.trim();
+  // Remove chrono phrases and trigger tokens from title
+  const phrasesToRemove = [...dateTexts, ...triggerTokens].filter(Boolean);
+  const title = titleWords
+    .filter(w => !phrasesToRemove.some(txt => txt.includes(w)))
+    .join(' ')
+    .trim();
 
 	let projectId: string | undefined = undefined;
 
@@ -121,15 +168,15 @@ export const convertStringToTaskBody = async (
 	}
 
 	let reminders: TickTickReminder[] | undefined = undefined;
-	// Only add reminder if not all day and there is a startDate
-	if (startDate && isAllDay === false) {
-		reminders = [
-			{
-				id: uuidv4(),
-				trigger: 'TRIGGER:-PT0S',
-			},
-		];
-	}
+  // Only add reminders for timed tasks with startDate
+  if (startDate && isAllDay === false) {
+    if (userReminders?.length) {
+      reminders = userReminders;
+    } else {
+      // keep your current default
+      reminders = [{ id: uuidv4(), trigger: 'TRIGGER:PT0S' }];
+    }
+  }
 
 	return {
 		title,
